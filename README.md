@@ -1,4 +1,4 @@
-# 🎓 RND1 - Seatudy Project
+# 🎓 Seatudy Project
 
 This repository contains the **Seatudy Online Learning Platform**, built with:
 
