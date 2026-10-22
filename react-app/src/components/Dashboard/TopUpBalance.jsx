@@ -10,7 +10,7 @@ function TopUpBalance({onTopUpSuccess }) {
     e.preventDefault();
     console.log('Token:', token);
     try {
-      const res = await fetch('http://localhost:5000/api/topup', {
+      const res = await fetch('http://localhost:5000/api/student/topup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

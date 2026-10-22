@@ -48,19 +48,26 @@ function StudentCourses() {
           const userData = await profileRes.json();
           setUser(userData);
 
+          if (userData.role !== 'student') {
+            const publicRes = await fetch('http://localhost:5000/api/public/courses');
+            const publicData = publicRes.ok ? await publicRes.json() : [];
+            setAvailableCourses(publicData);
+            return;
+          }
+
           const res = await fetch('http://localhost:5000/api/student/courses', {
             headers: { Authorization: `Bearer ${token}` },
           });
 
           if (res.status === 403) {
-            alert('You must enroll in this course to view the details.');
-            navigate('/dashboard/student/courses');
+            navigate('/dashboard');
+            return;
           }
 
           const data = await res.json();
-          setEnrolledCourses(data.enrolled);
-          setBoughtCourses(data.bought);
-          setAvailableCourses(data.available);
+          setEnrolledCourses(data.enrolled || []);
+          setBoughtCourses(data.bought || []);
+          setAvailableCourses(data.available || []);
         } else {
           const res = await fetch('http://localhost:5000/api/public/courses');
           const publicData = await res.json();
@@ -72,7 +79,7 @@ function StudentCourses() {
     };
 
     fetchData();
-  }, [token]);
+  }, [token, navigate]);
 
   const handleBuy = async (courseId) => {
     try {
@@ -83,7 +90,7 @@ function StudentCourses() {
       const data = await res.json();
       alert(data.message);
       window.location.reload();
-    } catch (err) {
+    } catch {
       alert('Purchase failed');
     }
   };
@@ -97,7 +104,7 @@ function StudentCourses() {
       const data = await res.json();
       alert(data.message);
       window.location.reload();
-    } catch (err) {
+    } catch {
       alert('Enrollment failed');
     }
   };
@@ -143,12 +150,15 @@ function StudentCourses() {
       )}
 
       <section className="course-section">
-        <h2>Available Courses</h2>
+        <h2>{user.role && user.role !== 'student' ? 'Browse Courses' : 'Available Courses'}</h2>
         <div className="filters">
           <select onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="">All Categories</option>
-            <option value="category">category</option>
-            <option value="category2">category2</option>
+            {[...new Set(availableCourses.map(c => c.category).filter(Boolean))]
+              .sort()
+              .map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
           </select>
 
           <select onChange={(e) => setLevelFilter(e.target.value)}>

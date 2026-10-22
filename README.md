@@ -1,118 +1,216 @@
-# 🎓 Seatudy Project
+# Seatudy
 
-This repository contains the **Seatudy Online Learning Platform**, built with:
+Seatudy adalah platform kursus online dengan tiga peran: **student**, **instructor**, dan **admin**.
 
-- **Frontend:** React + Vite
-- **Backend:** Node.js + Express
+- **Frontend:** React 19 + Vite
+- **Backend:** Node.js + Express 5
 - **Database:** PostgreSQL
-- **Auth:** JWT-based Authentication
+- **Auth:** JWT
 - **Real-time:** Socket.IO
 
 ---
 
-## 📦 Project Structure
+## Struktur Project
 
 ```
-RND1/
-│── react-app/        # Frontend (React + Vite)
-│── server/           # Backend (Express + PostgreSQL)
-│   ├── controllers/  # Route handlers
-│   ├── middlewares/  # Middleware functions
-│   ├── routes/       # API routes
-│   ├── uploads/      # Uploaded files
-│   ├── db.js         # Database connection
-│   ├── index.js      # Express entry point
-│   ├── .env.example  # Example environment variables
-│── README.md         # Documentation
+seatudy/
+├── react-app/            # Frontend (React + Vite)
+│   └── src/
+│       ├── components/   # Auth, Courses, Dashboard, Assignment, Review, Forum
+│       ├── contexts/     # AuthContext, ThemeContext
+│       └── App.jsx       # Routing
+└── server/               # Backend (Express + PostgreSQL)
+    ├── controllers/      # Route handlers
+    ├── middlewares/      # Auth + upload (multer)
+    ├── routes/           # API routes
+    ├── db/
+    │   ├── init.sql      # Schema database
+    │   └── seed.sql      # Data demo (opsional)
+    ├── uploads/          # File upload (dibuat otomatis)
+    ├── db.js             # Koneksi PostgreSQL
+    ├── index.js          # Entry point
+    └── .env.example
 ```
 
 ---
 
-## 🚀 How to Run Locally
+## Quick Start (Windows)
 
-### 1. Clone Repository
-```bash
-git clone https://github.com/yourusername/RND1.git
-cd RND1
+Prasyarat: Node.js 20+ dan PostgreSQL 14+. Jika PostgreSQL belum terpasang, project ini bisa memakai PostgreSQL portable di `..\pgsql`.
+
+Jika PostgreSQL portable sudah disiapkan di `..\pgsql`:
+
+```bat
+start-dev.cmd   :: start database + backend + frontend, lalu buka browser
+stop-dev.cmd    :: hentikan backend, frontend, dan database
+start-db.cmd    :: start database saja
+stop-db.cmd     :: stop database saja
 ```
 
-### 2. Setup Environment
-- Copy `.env.example` to `.env`
-- Fill it with your real values:
+Database lokal: `seatudy` di `127.0.0.1:5432` (user `postgres`, password `postgres`).
+
+---
+
+## Menjalankan Secara Lokal
+
+### 1. Clone
 
 ```bash
+git clone https://github.com/IniEyyy/seatudy.git
+cd seatudy
+```
+
+### 2. Backend
+
+```bash
+cd server
+npm install
 cp .env.example .env
 ```
 
-### 3. Install Dependencies
-
-- Install server dependencies:
-```bash
-cd server
-npm install
-```
-
-- Install frontend dependencies:
-```bash
-cd ../react-app
-npm install
-```
-
-### 4. Setup Database
-
-Make sure PostgreSQL is running and create a database:
-
-```bash
-createdb seatudy
-```
-
-Run the schema (if you have an `init.sql`):
-```bash
-psql -U postgres -d seatudy -f db/init.sql
-```
-
-### 5. Start Backend
-
-```bash
-cd server
-npm start
-```
-
-### 6. Start Frontend
-
-```bash
-cd react-app
-npm run dev
-```
-
----
-
-## 🔑 Environment Variables
-
-Create a `.env` file in `/server` with the following:
+Sesuaikan `.env` dengan konfigurasi PostgreSQL lokal:
 
 ```env
-# Server settings
 PORT=5000
+FRONTEND_URL=http://localhost:5173
 
-# PostgreSQL database connection
-DB_USER=your_db_user
+DB_USER=postgres
 DB_PASSWORD=your_db_password
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=seatudy
 
-# JWT Secret
-JWT_SECRET=your_secret_key
+JWT_SECRET=ganti_dengan_string_random_panjang
+```
+
+Buat database dan jalankan schema:
+
+```bash
+createdb seatudy
+psql -U postgres -d seatudy -f db/init.sql
+```
+
+Opsional, isi data demo:
+
+```bash
+psql -U postgres -d seatudy -f db/seed.sql
+```
+
+Jalankan server:
+
+```bash
+npm start        # production
+npm run dev      # auto-restart (node --watch)
+```
+
+### 3. Frontend
+
+```bash
+cd react-app
+npm install
+npm run dev
+```
+
+Frontend berjalan di `http://localhost:5173` dan memanggil API di `http://localhost:5000`.
+
+---
+
+## Akun Demo
+
+Tersedia setelah menjalankan `db/seed.sql`:
+
+| Role       | Email                     | Password       |
+| ---------- | ------------------------- | -------------- |
+| Admin      | admin@seatudy.local       | Admin@123      |
+| Instructor | instructor@seatudy.local  | Instructor@123 |
+| Student    | student@seatudy.local     | Student@123    |
+
+---
+
+## Environment Variables
+
+| Variable       | Default                 | Keterangan              |
+| -------------- | ----------------------- | ----------------------- |
+| `PORT`         | `5000`                  | Port backend            |
+| `FRONTEND_URL` | `http://localhost:5173` | Origin yang diizinkan CORS |
+| `DB_USER`      | -                       | User PostgreSQL         |
+| `DB_PASSWORD`  | -                       | Password PostgreSQL     |
+| `DB_HOST`      | `localhost`             | Host PostgreSQL         |
+| `DB_PORT`      | `5432`                  | Port PostgreSQL         |
+| `DB_NAME`      | `seatudy`               | Nama database           |
+| `JWT_SECRET`   | -                       | Secret untuk menandatangani JWT |
+
+---
+
+## Fitur
+
+- [x] Registrasi & login JWT
+- [x] Role-based access (student, instructor, admin)
+- [x] CRUD course oleh instructor
+- [x] Upload materi (file) + preview/download
+- [x] Top up saldo & pembelian course
+- [x] Enrollment (course berbayar wajib dibeli dulu)
+- [x] Assignment, submission (teks + file), penilaian
+- [x] Halaman "My Assignments" untuk student
+- [x] Ringkasan submission semua assignment untuk instructor
+- [x] Review & rating course
+- [x] Forum diskusi per course
+- [x] Notifikasi real-time (Socket.IO)
+- [x] Admin dashboard (kelola user + lihat daftar course)
+
+---
+
+## Testing
+
+```bash
+cd react-app
+npm run lint
+npm run build
 ```
 
 ---
 
-## ✅ Features
+## Troubleshooting
 
-- [x] User authentication (JWT)
-- [x] Role-based access (Student, Instructor, Admin)
-- [x] Course management (CRUD)
-- [x] Student enrollment & purchase flow
-- [x] Assignments & submissions
-- [x] Real-time notifications (Socket.IO)
+**Port 5000/5173 sudah dipakai**
+
+```bat
+stop-dev.cmd
+start-dev.cmd
+```
+
+Atau hentikan proses yang menempati port tersebut lewat Task Manager.
+
+**PostgreSQL gagal start**
+
+Cek log di `..\pgsql\pg.log`. Pastikan port `5432` tidak dipakai PostgreSQL lain, lalu jalankan `start-db.cmd` lagi.
+
+**Lupa/reset database lokal**
+
+```bash
+psql -U postgres -c "DROP DATABASE IF EXISTS seatudy;"
+psql -U postgres -c "CREATE DATABASE seatudy;"
+psql -U postgres -d seatudy -f db/init.sql
+psql -U postgres -d seatudy -f db/seed.sql
+```
+
+**Login berhasil tetapi halaman kosong/403**
+
+Pastikan role akun sesuai halaman yang dibuka. Student hanya bisa membuka halaman student, instructor halaman instructor, sedangkan admin dapat membuka dashboard admin dan daftar course.
+
+---
+
+## Batasan
+
+- Upload file disimpan lokal di `server/uploads/`, belum memakai object storage.
+- Token JWT disimpan di `localStorage` (cocok untuk demo, bukan produksi).
+- Belum ada verifikasi email, reset password, atau payment gateway nyata.
+
+---
+
+## Catatan Pengembangan
+
+- File upload disimpan di `server/uploads/` dan tidak masuk git.
+- Folder upload dibuat otomatis saat server dijalankan.
+- Schema bersifat idempotent (`CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang.
+- `server/node_modules` sengaja tidak lagi dilacak git; jalankan `npm install`.

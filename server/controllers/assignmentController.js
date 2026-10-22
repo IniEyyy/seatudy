@@ -1,40 +1,48 @@
 const pool = require('../db');
 
-// Submit an assignment
-exports.submitAssignment = async (req, res) => {
-  const assignmentId = req.params.id;
+// List every assignment from the courses the student is enrolled in
+exports.getMyAssignments = async (req, res) => {
   const studentId = req.user.id;
-  const { content } = req.body;
-
-  if (req.user.role !== 'student') {
-    return res.status(403).json({ message: 'Only students can submit assignments' });
-  }
 
   try {
-    const assignment = await pool.query('SELECT * FROM assignments WHERE id = $1', [assignmentId]);
-    if (assignment.rows.length === 0) {
-      return res.status(404).json({ message: 'Assignment not found' });
-    }
+    const result = await pool.query(`
+      SELECT
+        a.id,
+        a.title,
+        a.description,
+        a.due_date,
+        c.id AS course_id,
+        c.title AS course_title,
+        s.id AS submission_id,
+        s.score,
+        s.created_at AS submitted_at
+      FROM assignments a
+      JOIN courses c ON a.course_id = c.id
+      JOIN enrollments e ON e.course_id = c.id AND e.student_id = $1
+      LEFT JOIN LATERAL (
+        SELECT id, score, created_at
+        FROM submissions
+        WHERE assignment_id = a.id AND student_id = $1
+        ORDER BY created_at DESC
+        LIMIT 1
+      ) s ON TRUE
+      ORDER BY a.due_date ASC
+    `, [studentId]);
 
-    const courseId = assignment.rows[0].course_id;
-    const enrolled = await pool.query(
-      'SELECT * FROM enrollments WHERE student_id = $1 AND course_id = $2',
-      [studentId, courseId]
-    );
+    const assignments = result.rows.map((row) => {
+      const isLate = row.submitted_at
+        ? new Date(row.submitted_at) > new Date(row.due_date)
+        : false;
 
-    if (enrolled.rows.length === 0) {
-      return res.status(403).json({ message: 'Not enrolled in this course' });
-    }
+      let status = 'Not Submitted';
+      if (row.submitted_at) status = isLate ? 'Late' : 'On Time';
 
-    await pool.query(
-      `INSERT INTO submissions (assignment_id, student_id, content)
-       VALUES ($1, $2, $3)`,
-      [assignmentId, studentId, content]
-    );
+      return { ...row, status, is_late: isLate };
+    });
 
-    res.status(200).json({ message: 'Assignment submitted successfully' });
+    res.json(assignments);
   } catch (err) {
-    console.error('Submit assignment error:', err);
+    console.error('Fetch student assignments error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

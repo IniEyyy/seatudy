@@ -17,17 +17,11 @@ function StudentCourse() {
   const [hasPurchased, setHasPurchased] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
-  const [animate, setAnimate] = useState(false);
   const [refreshReview, setRefreshReview] = useState(false);
   const handleReviewRefresh = () => setRefreshReview(prev => !prev);
 
-
   const handleTabChange = (tab) => {
-    setAnimate(false);
-    setTimeout(() => {
-      setActiveTab(tab);
-      setAnimate(true);
-    }, 100);
+    setActiveTab(tab);
   };
 
   const isTokenExpired = (token) => {
@@ -100,7 +94,7 @@ function StudentCourse() {
     };
 
     fetchCourseDetail();
-  }, [id, navigate]);
+  }, [id, navigate, token]);
 
   const handleBuy = async () => {
     try {
@@ -111,7 +105,7 @@ function StudentCourse() {
       const data = await res.json();
       alert(data.message);
       window.location.reload();
-    } catch (err) {
+    } catch {
       alert('Failed to purchase course');
     }
   };
@@ -125,7 +119,7 @@ function StudentCourse() {
       const data = await res.json();
       alert(data.message);
       window.location.reload();
-    } catch (err) {
+    } catch {
       alert('Failed to enroll in course');
     }
   };
@@ -139,7 +133,10 @@ function StudentCourse() {
       <div className="course-card">
         <h2>{course.title}</h2>
         <p>{course.description}</p>
-        <p><strong>Rating:</strong> {course.rating_avg ?? 'Not rated yet'}</p>
+        <p><strong>Price:</strong> {Number(course.price) > 0 ? `$${course.price}` : 'Free'}</p>
+        {course.category && <p><strong>Category:</strong> {course.category}</p>}
+        {course.level && <p><strong>Level:</strong> {course.level}</p>}
+        <p><strong>Rating:</strong> {course.rating_avg ? `${Number(course.rating_avg).toFixed(1)}/5` : 'Not rated yet'}</p>
         <p><strong>Students Enrolled:</strong> {course.student_count ?? 0}</p>
         <p><strong>Instructor:</strong> {course.instructor_name ?? 'N/A'}</p>
 
@@ -160,7 +157,7 @@ function StudentCourse() {
               <button onClick={() => handleTabChange('review')}>Review</button>
               <button onClick={() => handleTabChange('forum')}>Forum</button>
             </div>
-            <div className={`tab-content ${animate ? 'fade-in' : ''}`}>
+            <div className="tab-content" key={activeTab}>
             {activeTab === 'overview' && (
               <div className='course-detail'>
                 <h3>Syllabus</h3>

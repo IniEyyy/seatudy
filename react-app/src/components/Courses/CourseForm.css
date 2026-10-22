@@ -65,28 +65,32 @@
 }
 
 .form button[type="submit"] {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
+    background-color: #007bff;
+    color: white;
+    border: none;
+    min-height: 40px;
+    padding: 0 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
 
-.form button[type="submit"]:hover {
-  background-color: #005dc1;
-}
+  .form button[type="submit"]:hover {
+    background-color: #005dc1;
+  }
 
-.form button[type="button"] {
-  background-color: #f1f1f1;
-  color: #333;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
+  .form button[type="button"] {
+    background-color: #f1f1f1;
+    color: #333;
+    border: none;
+    min-height: 40px;
+    padding: 0 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
 
 .form button[type="button"]:hover {
   background-color: #ddd;

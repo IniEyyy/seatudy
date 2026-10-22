@@ -69,15 +69,30 @@ function Navbar() {
     <nav className="navbar">
       <h2>Seatudy {user ? user.role : 'Guest'}</h2>
       <div className="navbar-links">
-        <Link to="/dashboard/student/courses">Courses</Link>
         <Link to="/dashboard">Dashboard</Link>
+        {user?.role === 'student' && (
+          <>
+            <Link to="/dashboard/student/courses">Courses</Link>
+            <Link to="/student/topup">TopUp</Link>
+          </>
+        )}
+        {user?.role === 'instructor' && (
+          <>
+            <Link to="/dashboard/instructor/courses">My Courses</Link>
+            <Link to="/dashboard/instructor/submissions">Submissions</Link>
+          </>
+        )}
+        {user?.role === 'admin' && (
+          <>
+            <Link to="/dashboard/courses">Courses</Link>
+            <Link to="/dashboard/admin">Users</Link>
+          </>
+        )}
         {user ? (
-          <Link to="/dashboard" onClick={handleLogout}>Logout</Link>
+          <Link to="/login" onClick={handleLogout}>Logout</Link>
         ) : (
           <Link to="/login">Login</Link>
         )}
-        {user && <Link to="/student/topup">TopUp</Link>}
-        {user?.role === 'admin' && <Link to="/dashboard/admin">Data</Link>}
       </div>
 
       <div className="navbar-right">

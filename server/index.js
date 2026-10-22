@@ -18,10 +18,11 @@ const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // CORS setup (allow frontend React dev server)
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: FRONTEND_URL,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // important for cookies / token
@@ -29,12 +30,13 @@ app.use(cors({
 
 // Middleware JSON parser
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Create HTTP server & bind socket.io
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: FRONTEND_URL,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -89,6 +91,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Health check route
 app.get("/", (req, res) => {
   res.json({ status: "OK", message: "Welcome to the API" });
+});
+
+// Unknown API route
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+// Central error handler (multer, JSON parse, etc.)
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message);
+  const status = err.status || (err.name === "MulterError" ? 400 : 500);
+  res.status(status).json({ message: err.message || "Server error" });
 });
 
 // Start server

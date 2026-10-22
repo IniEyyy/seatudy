@@ -1,6 +1,4 @@
 const pool = require('../db');
-const path = require('path');
-const upload = require('../middlewares/uploadSubmission');
 
 // Get all student courses grouped by enrolled, bought, available
 exports.getAllStudentCourses = async (req, res) => {
@@ -45,15 +43,16 @@ exports.getAllStudentCourses = async (req, res) => {
 exports.topUpBalance = async (req, res) => {
   const { amount } = req.body;
   const userId = req.user.id;
+  const numericAmount = Number(amount);
 
-  if (!amount || amount <= 0) {
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
     return res.status(400).json({ message: 'Invalid amount' });
   }
 
   try {
     await pool.query(
       `UPDATE users SET balance = balance + $1 WHERE id = $2`,
-      [amount, userId]
+      [numericAmount, userId]
     );
 
     const updated = await pool.query(`SELECT balance FROM users WHERE id = $1`, [userId]);
@@ -69,6 +68,21 @@ exports.enrollCourse = async (req, res) => {
   const { courseId } = req.params;
 
   try {
+    const courseRes = await pool.query('SELECT price FROM courses WHERE id = $1', [courseId]);
+    if (courseRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (Number(courseRes.rows[0].price) > 0) {
+      const purchaseRes = await pool.query(
+        'SELECT 1 FROM purchases WHERE user_id = $1 AND course_id = $2',
+        [studentId, courseId]
+      );
+      if (purchaseRes.rows.length === 0) {
+        return res.status(403).json({ message: 'Purchase the course before enrolling' });
+      }
+    }
+
     await pool.query(
       'INSERT INTO enrollments (student_id, course_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [studentId, courseId]
@@ -87,47 +101,83 @@ exports.enrollCourse = async (req, res) => {
   }
 };
 
-exports.buyCourse = async (req, res) => {
-  const studentId = req.user.id;
+// Check whether the logged-in student has purchased a course
+exports.getPurchaseStatus = async (req, res) => {
+  const userId = req.user.id;
   const { courseId } = req.params;
 
   try {
-    // Get course info + instructor
-    const courseRes = await pool.query(`
-      SELECT c.price, c.title, c.instructor_id
-      FROM courses c
-      WHERE c.id = $1
-    `, [courseId]);
+    const result = await pool.query(
+      'SELECT 1 FROM purchases WHERE user_id = $1 AND course_id = $2',
+      [userId, courseId]
+    );
+    res.json({ purchased: result.rows.length > 0 });
+  } catch (err) {
+    console.error('Purchase status error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
+exports.buyCourse = async (req, res) => {
+  const studentId = req.user.id;
+  const { courseId } = req.params;
+  let client;
+
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    // Lock the student row so two concurrent purchases cannot overspend
+    const userRes = await client.query(
+      'SELECT balance, username FROM users WHERE id = $1 FOR UPDATE',
+      [studentId]
+    );
+    const { balance: userBalance, username: studentName } = userRes.rows[0];
+
+    const existing = await client.query(
+      'SELECT 1 FROM purchases WHERE user_id = $1 AND course_id = $2',
+      [studentId, courseId]
+    );
+    if (existing.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'You already own this course' });
+    }
+
+    const courseRes = await client.query(
+      'SELECT price, title, instructor_id FROM courses WHERE id = $1',
+      [courseId]
+    );
     if (courseRes.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Course not found' });
     }
 
     const { price: coursePrice, title: courseTitle, instructor_id } = courseRes.rows[0];
 
-    // Get student info
-    const userRes = await pool.query('SELECT balance, username FROM users WHERE id = $1', [studentId]);
-    const { balance: userBalance, username: studentName } = userRes.rows[0];
-
-    if (userBalance < coursePrice) {
+    if (Number(userBalance) < Number(coursePrice)) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ message: 'Insufficient balance' });
     }
 
-    // Deduct balance and record purchase
-    await pool.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [coursePrice, studentId]);
-    await pool.query('INSERT INTO purchases (user_id, course_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [studentId, courseId]);
+    await client.query(
+      'UPDATE users SET balance = balance - $1 WHERE id = $2',
+      [coursePrice, studentId]
+    );
+    await client.query(
+      'INSERT INTO purchases (user_id, course_id) VALUES ($1, $2)',
+      [studentId, courseId]
+    );
 
-    // === NOTIFICATION PART ===
-    const io = req.app.get('io');
-    const onlineUsers = req.app.get('onlineUsers');
-
-    // Save to database
-    await pool.query(`
+    await client.query(`
       INSERT INTO notifications (user_id, type, message, created_at)
       VALUES ($1, 'purchase', $2, CURRENT_TIMESTAMP)
     `, [instructor_id, `${studentName} has purchased your course "${courseTitle}"`]);
 
-    // Send real-time notification if instructor online
+    await client.query('COMMIT');
+
+    // === NOTIFICATION PART (real-time) ===
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
     const instructorSocketId = onlineUsers[instructor_id];
     if (instructorSocketId) {
       io.to(instructorSocketId).emit('new-notification', {
@@ -140,8 +190,13 @@ exports.buyCourse = async (req, res) => {
     res.json({ message: 'Course purchased successfully' });
 
   } catch (err) {
+    if (client) {
+      await client.query('ROLLBACK').catch(() => {});
+    }
     console.error('Buy course error:', err);
     res.status(500).json({ message: 'Server error' });
+  } finally {
+    if (client) client.release();
   }
 };
 
@@ -194,6 +249,22 @@ exports.submitAssignment = async (req, res) => {
   try {
     if (!content && (!files || files.length === 0)) {
       return res.status(400).json({ message: 'Text or file is required' });
+    }
+
+    const assignmentCheck = await pool.query(
+      'SELECT id FROM assignments WHERE id = $1 AND course_id = $2',
+      [assignmentId, courseId]
+    );
+    if (assignmentCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Assignment not found in this course' });
+    }
+
+    const enrollment = await pool.query(
+      'SELECT 1 FROM enrollments WHERE student_id = $1 AND course_id = $2',
+      [studentId, courseId]
+    );
+    if (enrollment.rows.length === 0) {
+      return res.status(403).json({ message: 'You are not enrolled in this course' });
     }
 
     // Insert submission

@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { AuthContext } from '../../../contexts/AuthContext';
-import './ForumDiscussion.css';
+import './forumDiscussion.css';
 
 function ForumDiscussion({ courseId }) {
   const { token, user } = useContext(AuthContext);
@@ -9,7 +9,7 @@ function ForumDiscussion({ courseId }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/student/forum/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -19,16 +19,16 @@ function ForumDiscussion({ courseId }) {
       console.log('Fetched forum messages:', data);
       if (!Array.isArray(data)) throw new Error('Invalid response from server');
       setMessages(data);
-    } catch (err) {
+    } catch {
       setError('Failed to load forum');
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, token]);
 
   useEffect(() => {
     fetchMessages();
-  }, [courseId]);
+  }, [fetchMessages]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +51,7 @@ function ForumDiscussion({ courseId }) {
         const errData = await res.json();
         setError(errData.message || 'Post failed');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to post message');
     }
   };

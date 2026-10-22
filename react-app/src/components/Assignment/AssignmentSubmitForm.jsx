@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './AssignmentSubmitForm.css';
+import './assignmentSubmitForm.css';
 
 function AssignmentSubmitForm({ token, courseId, assignmentId, onSuccess }) {
   const [submissionText, setSubmissionText] = useState('');
@@ -46,7 +46,7 @@ function AssignmentSubmitForm({ token, courseId, assignmentId, onSuccess }) {
       } else {
         setMessage(data.message || 'Failed to submit');
       }
-    } catch (err) {
+    } catch {
       setMessage('Submission failed');
     }
   };

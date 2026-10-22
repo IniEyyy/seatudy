@@ -14,6 +14,8 @@ router.get('/courses/:id', isEnrolled, studentController.getCourseDetail);
 
 router.post('/enroll/:courseId', studentController.enrollCourse);
 
+router.get('/purchases/:courseId', studentController.getPurchaseStatus);
+
 router.post('/buy/:courseId', studentController.buyCourse);
 
 router.post('/topup', studentController.topUpBalance);

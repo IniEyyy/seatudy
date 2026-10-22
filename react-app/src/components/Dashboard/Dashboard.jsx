@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Dashboard.css';
+import './dashboard.css';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -41,9 +41,9 @@ function Dashboard() {
 
   const studentCards = [
     { title: "My Courses", desc: "View all your courses.", action: () => navigate('/dashboard/student/courses') },
-    { title: "Assignments", desc: "Check your upcoming and submitted assignments.", action: () => {} },
-    { title: "Progress", desc: "Track your learning progress across courses.", action: () => {} },
-    { title: "Forum", desc: "Join discussions and collaborate with peers.", action: () => {} }
+    { title: "Assignments", desc: "Check your upcoming and submitted assignments.", action: () => navigate('/dashboard/student/assignments') },
+    { title: "Progress", desc: "Track your learning progress across courses.", action: () => navigate('/dashboard/student/courses') },
+    { title: "Forum", desc: "Join discussions and collaborate with peers.", action: () => navigate('/dashboard/student/courses') }
   ];
 
   const renderStudentDashboard = () => (
@@ -67,8 +67,23 @@ function Dashboard() {
       </div>
       <div className="dashboard-card">
         <h2>Student Submissions</h2>
-        <p>Review submitted assignments.</p>
-        <button>Review</button>
+        <p>See every assignment and how many students have submitted.</p>
+        <button onClick={() => navigate('/dashboard/instructor/submissions')}>Review</button>
+      </div>
+    </div>
+  );
+
+  const renderAdminDashboard = () => (
+    <div className="dashboard-grid">
+      <div className="dashboard-card">
+        <h2>Manage Users</h2>
+        <p>View all registered students, instructors, and admins.</p>
+        <button onClick={() => navigate('/dashboard/admin')}>Users</button>
+      </div>
+      <div className="dashboard-card">
+        <h2>Browse Courses</h2>
+        <p>Explore published courses and their details.</p>
+        <button onClick={() => navigate('/dashboard/courses')}>Courses</button>
       </div>
     </div>
   );
@@ -79,7 +94,11 @@ function Dashboard() {
         <h1>{user?.username ? `Logged in as ${user.username}` : 'Hello, Guest'}!</h1>
         <p>Welcome to this learning dashboard</p>
       </div>
-      {user?.role === 'instructor' ? renderInstructorDashboard() : renderStudentDashboard()}
+      {user?.role === 'admin'
+        ? renderAdminDashboard()
+        : user?.role === 'instructor'
+          ? renderInstructorDashboard()
+          : renderStudentDashboard()}
     </div>
   );
 }

@@ -32,7 +32,7 @@ function CreateCourseForm({onClose, onUpdate}) {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to create course');
-      setForm({ title: '', description: '', category: '', price: '', level: 'Beginner' })
+      setForm({ title: '', description: '', syllabus: '', category: '', price: 0, level: 'Beginner' })
 
       alert('Course created!');
       if (onUpdate) onUpdate();

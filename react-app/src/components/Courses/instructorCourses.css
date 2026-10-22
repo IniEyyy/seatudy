@@ -26,3 +26,51 @@
 .course-card p {
   margin: 0.25rem 0;
 }
+
+.my-courses .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.my-courses .button-group button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.my-courses .create-course-btn {
+  min-height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.my-courses .create-course-btn:hover {
+  background-color: #0056b3;
+}
+
+.my-courses .button-group button:hover {
+  background-color: #0056b3;
+}
+
+.my-courses .button-group button.delete-btn {
+  background-color: #dc2626;
+}
+
+.my-courses .button-group button.delete-btn:hover {
+  background-color: #b91c1c;
+}

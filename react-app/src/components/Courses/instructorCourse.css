@@ -200,12 +200,33 @@
   flex-direction: column;
   gap: 6px;
   margin-left: 16px;
+  align-items: flex-start;
 }
 
-.assignment-actions .edit-btn,
-.assignment-actions .remove-btn {
+.assignment-actions a {
+  text-decoration: none;
+}
+
+.assignment-actions button {
+  width: 126px;
+  height: 32px;
+  padding: 0 6px;
   border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+.assignment-actions .view-submissions-btn {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.assignment-actions .view-submissions-btn:hover {
+  background-color: #0056b3;
 }
 
 .assignment-actions .edit-btn {
@@ -224,4 +245,22 @@
 
 .assignment-actions .remove-btn:hover {
   background-color: #c62828;
+}
+
+@media (max-width: 640px) {
+  .assignment-item {
+    flex-direction: column;
+  }
+
+  .assignment-actions {
+    width: 100%;
+    margin-top: 12px;
+    margin-left: 0;
+  }
+
+  .assignment-actions a,
+  .assignment-actions button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
 }

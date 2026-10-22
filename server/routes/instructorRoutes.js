@@ -3,8 +3,6 @@ const router = express.Router();
 const instructorController = require('../controllers/instructorController');
 const { authenticate, isInstructor } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/upload');
-const fs = require('fs');
-const path = require('path');
 
 // All endpoint for instructor will be verified
 router.use(authenticate, isInstructor);
@@ -41,6 +39,9 @@ router.put('/assignments/:assignmentId', instructorController.updateAssignment);
 
 // DELETE assignment
 router.delete('/assignments/:assignmentId', instructorController.deleteAssignment);
+
+// GET submission summary across all assignments
+router.get('/submissions/overview', instructorController.getSubmissionsOverview);
 
 // GET student submission
 router.get('/assignments/:assignmentId/submissions', instructorController.getAssignmentSubmissions);

@@ -91,11 +91,14 @@
 }
 
 .tab-buttons button {
-  padding: 8px 14px;
+  min-height: 36px;
+  padding: 0 14px;
   border: none;
   background: #0077cc;
   color: white;
   border-radius: 5px;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.3s;
 }
@@ -106,16 +109,7 @@
 
 .tab-content {
   margin-top: 1.5rem;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-}
-
-.tab-content.fade-in {
-  opacity: 1;
-}
-
-.tab-content.fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.25s ease-in-out;
 }
 
 @keyframes fadeIn {
@@ -185,7 +179,25 @@
   .material-card {
     padding: 12px;
   }
-  .download-button {
+.course-card > button {
+  min-height: 38px;
+  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+  padding: 0 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.course-card > button:hover {
+  background-color: #0056b3;
+}
+
+.download-button {
     font-size: 1.2rem;
   }
 }

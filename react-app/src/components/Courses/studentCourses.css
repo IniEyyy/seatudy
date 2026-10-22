@@ -65,6 +65,25 @@
   background-color: #27ae60;
 }
 
+.course-card > button {
+  min-height: 38px;
+  margin-top: 0.6rem;
+  margin-right: 0.5rem;
+  padding: 0 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.course-card > button:hover {
+  background-color: #0056b3;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;

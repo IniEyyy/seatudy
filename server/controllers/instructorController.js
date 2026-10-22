@@ -11,7 +11,7 @@ exports.getAllCourses = async (req, res) => {
 
     const result = await pool.query(`
       SELECT 
-        id, title, description, price, level, category, 
+        id, title, description, price, level, category, syllabus,
         rating_avg, student_count, created_at, updated_at
       FROM courses
       WHERE instructor_id = $1
@@ -134,6 +134,10 @@ exports.getCourseDetail = async (req, res) => {
       [id, req.user.id]
     );
 
+    if (courseRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Course not found or unauthorized' });
+    }
+
     const materials = await pool.query(
       'SELECT * FROM materials WHERE course_id = $1',
       [id]
@@ -166,6 +170,14 @@ exports.addMaterial = async (req, res) => {
   }
 
   try {
+    const courseCheck = await pool.query(
+      'SELECT 1 FROM courses WHERE id = $1 AND instructor_id = $2',
+      [courseId, req.user.id]
+    );
+    if (courseCheck.rows.length === 0) {
+      return res.status(403).json({ message: 'Unauthorized or course not found' });
+    }
+
     for (let file of files) {
       const fileTitle = path.parse(file.originalname).name;
       const filePath = `/uploads/materials/${file.filename}`;
@@ -273,7 +285,7 @@ exports.updateAssignment = async (req, res) => {
 
     const updated = await pool.query(`
       UPDATE assignments
-      SET title = $1, description = $2, due_date = $3
+      SET title = $1, description = $2, due_date = $3, updated_at = CURRENT_TIMESTAMP
       WHERE id = $4
       RETURNING *`,
       [title, description, due_date, assignmentId]
@@ -341,11 +353,11 @@ exports.getAssignmentSubmissions = async (req, res) => {
 
     // 3. Take last submission of student
     const submissionsRes = await pool.query(`
-      SELECT DISTINCT ON (s.student_id) s.*, u.username AS student_name
+      SELECT DISTINCT ON (s.student_id) s.*, s.created_at AS submitted_at, u.username AS student_name
       FROM submissions s
       JOIN users u ON u.id = s.student_id
       WHERE s.assignment_id = $1
-      ORDER BY s.student_id, s.submitted_at DESC
+      ORDER BY s.student_id, s.created_at DESC
     `, [assignmentId]);
 
 
@@ -404,16 +416,74 @@ exports.getAssignmentSubmissions = async (req, res) => {
   }
 };
 
+// GET submission summary across all instructor assignments
+exports.getSubmissionsOverview = async (req, res) => {
+  const instructorId = req.user.id;
+
+  try {
+    const result = await pool.query(`
+      SELECT
+        a.id AS assignment_id,
+        a.title,
+        a.due_date,
+        c.id AS course_id,
+        c.title AS course_title,
+        (SELECT COUNT(*)::int FROM enrollments e WHERE e.course_id = c.id) AS total_students,
+        COALESCE(stats.submitted, 0)::int AS submitted,
+        COALESCE(stats.on_time, 0)::int AS on_time,
+        COALESCE(stats.late, 0)::int AS late
+      FROM assignments a
+      JOIN courses c ON a.course_id = c.id
+      LEFT JOIN LATERAL (
+        SELECT
+          COUNT(*) AS submitted,
+          COUNT(*) FILTER (WHERE latest.created_at <= a.due_date) AS on_time,
+          COUNT(*) FILTER (WHERE latest.created_at > a.due_date) AS late
+        FROM (
+          SELECT DISTINCT ON (s.student_id) s.student_id, s.created_at
+          FROM submissions s
+          WHERE s.assignment_id = a.id
+          ORDER BY s.student_id, s.created_at DESC
+        ) latest
+      ) stats ON TRUE
+      WHERE c.instructor_id = $1
+      ORDER BY a.due_date DESC NULLS LAST, c.title, a.title
+    `, [instructorId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Fetch submissions overview error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.giveScore = async (req, res) => {
   const { submissionId } = req.params;
   const { score } = req.body;
+  const instructorId = req.user.id;
+
+  const numericScore = Number(score);
+  if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > 100) {
+    return res.status(400).json({ message: 'Score must be between 0 and 100' });
+  }
 
   try {
-    const update = await pool.query(`
-      UPDATE submissions SET score = $1 WHERE id = $2 RETURNING *
-    `, [score, submissionId]);
+    const ownership = await pool.query(`
+      SELECT s.id
+      FROM submissions s
+      JOIN assignments a ON s.assignment_id = a.id
+      JOIN courses c ON a.course_id = c.id
+      WHERE s.id = $1 AND c.instructor_id = $2
+    `, [submissionId, instructorId]);
 
-    if (update.rows.length === 0) return res.status(404).json({ message: 'Submission not found' });
+    if (ownership.rows.length === 0) {
+      return res.status(404).json({ message: 'Submission not found or access denied' });
+    }
+
+    const update = await pool.query(
+      'UPDATE submissions SET score = $1 WHERE id = $2 RETURNING *',
+      [numericScore, submissionId]
+    );
 
     res.json({ message: 'Score updated', submission: update.rows[0] });
   } catch (err) {

@@ -10,11 +10,28 @@ exports.submitReview = async (req, res) => {
     return res.status(403).json({ message: 'Only students can review courses' });
   }
 
+  const numericRating = Number(rating);
+  if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+    return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+  }
+
   try {
+    const enrolled = await pool.query(
+      'SELECT 1 FROM enrollments WHERE student_id = $1 AND course_id = $2',
+      [userId, courseId]
+    );
+    if (enrolled.rows.length === 0) {
+      return res.status(403).json({ message: 'You must be enrolled to review this course' });
+    }
+
     await pool.query(`
       INSERT INTO reviews (course_id, user_id, rating, comment, created_at)
       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-    `, [courseId, userId, rating, comment]);
+      ON CONFLICT (course_id, user_id)
+      DO UPDATE SET rating = EXCLUDED.rating,
+                    comment = EXCLUDED.comment,
+                    created_at = CURRENT_TIMESTAMP
+    `, [courseId, userId, numericRating, comment]);
 
     await pool.query(`
       UPDATE courses

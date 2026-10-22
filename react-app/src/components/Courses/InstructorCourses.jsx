@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './InstructorCourses.css';
+import './instructorCourses.css';
 import EditCourseForm from './EditCourseForm';
 import CreateCourseForm from './CreateCourseForm';
 
@@ -66,7 +66,7 @@ function InstructorCourses() {
     <div className="my-courses">
       <h2>My Courses</h2>
 
-      <button onClick={handleCreateClick}>Create New Course</button>
+      <button className="create-course-btn" onClick={handleCreateClick}>Create New Course</button>
 
       {creatingCourse && (
         <CreateCourseForm
@@ -106,7 +106,7 @@ function InstructorCourses() {
                   View Course Detail
                 </button>
                 <button onClick={() => handleEditClick(course)}>Edit</button>
-                <button onClick={() => handleDelete(course.id)}>Delete</button>
+                <button onClick={() => handleDelete(course.id)} className="delete-btn">Delete</button>
               </div>
             </div>
           ))}

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import './instructorCourse.css';
 import AddMaterialForm from './AddMaterialForm';
 import AddAssignmentForm from './AddAssignmentForm';
@@ -14,7 +14,6 @@ function ViewCourseDetail() {
   const [editingAssignment, setEditingAssignment] = useState(null);
 
   const token = localStorage.getItem('token');
-  const navigate = useNavigate();
 
   const handleDeleteMaterial = async (materialId) => {
     const confirm = window.confirm("Are you sure you want to delete this material?");
@@ -38,7 +37,7 @@ function ViewCourseDetail() {
     }
   };
 
-  const fetchDetail = async () => {
+  const fetchDetail = useCallback(async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/instructor/courses/${id}`, {
         headers: {
@@ -56,7 +55,7 @@ function ViewCourseDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, token]);
 
   const handleDeleteAssignment = async (assignmentId) => {
     const confirm = window.confirm('Delete this assignment?');
@@ -81,7 +80,7 @@ function ViewCourseDetail() {
 
   useEffect(() => {
     fetchDetail();
-  }, [id]);
+  }, [fetchDetail]);
 
   if (loading) return <p>Loading...</p>;
   if (!course) return <p>Course not found.</p>;
@@ -131,12 +130,14 @@ function ViewCourseDetail() {
           <ul className="assignment-list">
             {assignments.map((asg) => (
               <li key={asg.id} className="assignment-item">
-                <strong>{asg.title}</strong>
-                <p>{asg.description}</p>
-                <small>Due: {new Date(asg.due_date).toLocaleDateString()}</small>
+                <div className="assignment-info">
+                  <strong>{asg.title}</strong>
+                  <p>{asg.description}</p>
+                  <small>Due: {new Date(asg.due_date).toLocaleDateString()}</small>
+                </div>
                 <div className="assignment-actions">
-                  <button onClick={() => setEditingAssignment(asg)}>Edit</button>
-                  <button onClick={() => handleDeleteAssignment(asg.id)}>Delete</button>
+                  <button className="edit-btn" onClick={() => setEditingAssignment(asg)}>Edit</button>
+                  <button className="remove-btn" onClick={() => handleDeleteAssignment(asg.id)}>Delete</button>
                   <Link to={`/dashboard/instructor/assignments/${asg.id}/submissions`}>
                     <button className="view-submissions-btn">View Submissions</button>
                   </Link>

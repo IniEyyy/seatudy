@@ -31,16 +31,27 @@
 }
 
 .add-assignment-form button {
+  min-height: 40px;
+  padding: 0 18px;
   background-color: #007bff;
   color: white;
-  padding: 10px 14px;
   border: none;
   border-radius: 6px;
-  font-weight: bold;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s ease;
 }
 
 .add-assignment-form button:hover {
   background-color: #0056b3;
+}
+
+.add-assignment-form button[type="button"] {
+  background-color: #e5e7eb;
+  color: #333;
+}
+
+.add-assignment-form button[type="button"]:hover {
+  background-color: #d1d5db;
 }

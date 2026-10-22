@@ -32,9 +32,16 @@ exports.getPublicCourseDetail = async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
+        c.id,
         c.title, 
         c.description, 
         c.syllabus,
+        c.category,
+        c.level,
+        c.price,
+        c.rating_avg,
+        c.student_count,
+        c.created_at,
         u.username AS instructor_name
       FROM courses c
       JOIN users u ON c.instructor_id = u.id

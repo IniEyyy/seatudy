@@ -8,7 +8,7 @@ import './AuthStyles.css';
 function parseJwt(token) {
   try {
     return JSON.parse(atob(token.split('.')[1]));
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -51,12 +51,9 @@ function Login() {
         throw new Error('Token sudah expired');
       }
 
-      const role = decoded?.role;
-      localStorage.setItem('role', role);
-
       if (res.ok) {
         login(token);
-        navigate(role === 'admin' ? '/dashboard/admin' : '/dashboard');
+        navigate('/dashboard');
       }
 
     } catch (err) {

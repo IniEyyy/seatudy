@@ -8,10 +8,10 @@ function CourseCard({ course, userRole, hasPurchased, hasEnrolled, onBuy, onEnro
     <div key={course.id} className="course-card available">
       <h3>{course.title}</h3>
       <p><strong>Description: </strong> {course.description}</p>
-      <p><strong>Rating: ⭐</strong> {course.rating_avg === 0 ? Math.floor(course.rating_avg) + '/5' : 'Not rated yet'}</p>
-      {!hasPurchased && <p><strong>Price: 💰 $</strong> {course.price}</p>}
+      <p><strong>Rating:</strong> {course.rating_avg ? `${Number(course.rating_avg).toFixed(1)}/5` : 'Not rated yet'}</p>
+      {!hasPurchased && <p><strong>Price:</strong> ${course.price ?? 0}</p>}
 
-      <p><strong>Enrolled: 🔥</strong> {course.student_count}</p>
+      <p><strong>Enrolled:</strong> {course.student_count ?? 0}</p>
 
       <button onClick={() => navigate(`/dashboard/student/courses/${course.id}`)}>View Course Detail</button>
 

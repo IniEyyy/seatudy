@@ -1,0 +1,79 @@
+.submissions-overview {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.submissions-overview h2 {
+  margin-bottom: 0.5rem;
+  color: #222;
+}
+
+.submissions-subtitle {
+  margin-bottom: 1.5rem;
+  color: #666;
+}
+
+.submissions-message {
+  padding: 2rem;
+  color: #666;
+}
+
+.submissions-table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.submissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.submissions-table th,
+.submissions-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eee;
+}
+
+.submissions-table th {
+  background: #f8fafc;
+  color: #444;
+  font-weight: 600;
+}
+
+.submissions-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.submissions-missing {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: #b45309;
+}
+
+.submissions-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  height: 34px;
+  padding: 0 14px;
+  background: #007bff;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.submissions-link:hover {
+  background: #0056b3;
+  text-decoration: none;
+}

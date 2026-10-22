@@ -52,7 +52,7 @@ function InstructorAssignmentSubmissions() {
       } else {
         alert(data.message || 'Failed to update score');
       }
-    } catch (err) {
+    } catch {
       alert('Error updating score');
     }
   };
