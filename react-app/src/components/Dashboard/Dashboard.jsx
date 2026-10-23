@@ -268,7 +268,7 @@ function Dashboard() {
           <div className="panel-heading">
             <div>
               <span className="eyebrow">Latest</span>
-              <h2>{role === 'student' ? 'Upcoming deadlines' : role === 'instructor' ? 'Recent submissions' : 'Newest accounts'}</h2>
+              <h2>{role === 'student' ? 'Assignments to finish' : role === 'instructor' ? 'Recent submissions' : 'Newest accounts'}</h2>
             </div>
           </div>
 

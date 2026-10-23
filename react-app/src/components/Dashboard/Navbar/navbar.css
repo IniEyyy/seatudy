@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--nav-bg);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -36,7 +36,7 @@
   height: 40px;
   border-radius: 12px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
@@ -106,15 +106,15 @@
   padding: 0 0.75rem;
   border-radius: var(--radius-pill);
   background: var(--accent-soft);
-  color: #92400e;
+  color: var(--accent-ink);
   font-size: 0.8rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .balance-chip:hover {
-  background: #fde68a;
-  color: #78350f;
+  background: var(--accent-soft-hover);
+  color: var(--accent-ink-strong);
 }
 
 .icon-button {
@@ -152,7 +152,7 @@
   place-items: center;
   border: 2px solid var(--surface);
   border-radius: var(--radius-pill);
-  background: var(--danger);
+  background: var(--danger-solid);
   color: #fff;
   font-size: 0.62rem;
   font-weight: 800;
@@ -414,7 +414,7 @@
 
 .user-dropdown-link.danger:hover {
   background: var(--danger-soft);
-  color: #b91c1c;
+  color: var(--danger-ink);
 }
 
 .menu-toggle {

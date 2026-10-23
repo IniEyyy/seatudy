@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useContext, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Pie } from 'react-chartjs-2';
 import {
@@ -11,6 +11,7 @@ import {
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import './instructorAssignmentSubmission.css';
 import { useToast } from '../../contexts/ToastContext';
+import { ThemeContext } from '../../contexts/ThemeContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -26,6 +27,7 @@ function InstructorAssignmentSubmissions() {
   const { assignmentId } = useParams();
   const token = localStorage.getItem('token');
   const { showToast } = useToast();
+  const { theme } = useContext(ThemeContext);
 
   const [submissions, setSubmissions] = useState([]);
   const [stats, setStats] = useState(null);
@@ -307,7 +309,7 @@ function InstructorAssignmentSubmissions() {
                         boxHeight: 10,
                         usePointStyle: true,
                         font: { family: 'Manrope', size: 11 },
-                        color: '#475569',
+                        color: theme === 'dark' ? '#a9b7cf' : '#475569',
                       },
                     },
                   },

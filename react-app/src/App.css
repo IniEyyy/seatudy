@@ -25,17 +25,17 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #eef2f7;
+  background: var(--paper);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c3cfdf;
-  border: 3px solid #eef2f7;
+  background: var(--line-strong);
+  border: 3px solid var(--paper);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #93a6bf;
+  background: var(--ink-faint);
 }
 
 .topup-form {

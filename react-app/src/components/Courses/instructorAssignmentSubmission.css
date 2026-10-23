@@ -38,10 +38,10 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1.1rem;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
-  background: #fff5f5;
-  color: #b91c1c;
+  background: var(--danger-surface-alt);
+  color: var(--danger-ink);
   font-size: 0.86rem;
   font-weight: 600;
 }
@@ -82,7 +82,7 @@
 
 .isub-stat-icon.is-amber {
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .isub-stat-icon.is-red {
@@ -188,12 +188,12 @@
 
 .isub-status.is-late {
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .isub-status.is-not-submitted {
   background: var(--danger-soft);
-  color: #b91c1c;
+  color: var(--danger-ink);
 }
 
 .isub-muted {
@@ -229,6 +229,10 @@
   border-radius: var(--radius-pill);
   background: var(--surface-muted);
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+:root[data-theme='dark'] .isub-progress {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .isub-progress-part {

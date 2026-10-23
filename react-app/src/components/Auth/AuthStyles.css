@@ -153,9 +153,17 @@
 }
 
 .auth-main {
+  position: relative;
   display: grid;
   place-items: center;
   padding: 3rem 1.5rem;
+}
+
+.auth-theme-slot {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 2;
 }
 
 .auth-card {
@@ -216,10 +224,10 @@
 .auth-error {
   margin: 0;
   padding: 0.7rem 0.85rem;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-border);
   border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--danger-surface);
+  color: var(--danger-ink);
   font-size: 0.8rem;
   line-height: 1.45;
 }
@@ -305,7 +313,7 @@
   }
 
   .auth-main {
-    padding: 2rem 1.25rem 3rem;
+    padding: 3.5rem 1.25rem 3rem;
     align-items: start;
   }
 
@@ -316,7 +324,12 @@
 
 @media (max-width: 480px) {
   .auth-main {
-    padding: 1.35rem 1rem 2.5rem;
+    padding: 3.25rem 1rem 2.5rem;
+  }
+
+  .auth-theme-slot {
+    top: 0.7rem;
+    right: 1rem;
   }
 
   .auth-brand {

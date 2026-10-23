@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ThemeToggle from '../Common/ThemeToggle';
 
 export default function AuthShell({ children }) {
   return (
@@ -43,6 +44,9 @@ export default function AuthShell({ children }) {
       </aside>
 
       <main className="auth-main">
+        <div className="auth-theme-slot">
+          <ThemeToggle />
+        </div>
         <div className="auth-card">{children}</div>
       </main>
     </div>

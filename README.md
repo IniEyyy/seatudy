@@ -126,6 +126,13 @@ Tersedia setelah menjalankan `db/seed.sql`:
 | Instructor | instructor@seatudy.local  | Instructor@123 |
 | Student    | student@seatudy.local     | Student@123    |
 
+Seed juga membuat akun tambahan untuk mengisi data demo:
+
+- Instructor: `rina@seatudy.local`, `bagas@seatudy.local`, `maya@seatudy.local` — password `Instructor@123`.
+- Student: `alya@seatudy.local`, `bima@seatudy.local`, `citra@seatudy.local`, `dimas@seatudy.local`, `eka@seatudy.local`, `fajar@seatudy.local`, `gita@seatudy.local`, `hendra@seatudy.local`, `intan@seatudy.local`, `joko@seatudy.local`, `kirana@seatudy.local`, `lukman@seatudy.local` — password `Student@123`.
+
+Total data demo: 9 course, 19 materi, 18 assignment, 26 enrollment, 27 submission, 23 review, 18 pesan forum, dan 21 notifikasi. Seed bersifat idempotent, jadi aman dijalankan ulang.
+
 ---
 
 ## Environment Variables
@@ -161,6 +168,7 @@ Tersedia setelah menjalankan `db/seed.sql`:
 - [x] Dashboard berbeda per role dengan statistik dan aktivitas terbaru
 - [x] Pencarian, filter, dan sorting pada katalog course
 - [x] Toast notification konsisten (pengganti `alert`)
+- [x] Dark mode (toggle di navbar & halaman auth, tersimpan di localStorage, mengikuti preferensi sistem)
 - [x] Health check database di `GET /api/health`
 - [x] Proteksi dasar: Helmet, rate limit login/register, JWT 8 jam
 
@@ -222,3 +230,4 @@ Pastikan role akun sesuai halaman yang dibuka. Student hanya bisa membuka halama
 - `server/node_modules` sengaja tidak lagi dilacak git; jalankan `npm install`.
 - Styling memakai token di `src/styles/theme.css` (warna, radius, shadow, font Sora/Manrope). Komponen baru memakai class ber-prefix (`catalog-`, `teach-`, `sc-`, `sa-`, `ic-`, `isub-`) agar tidak bentrok dengan CSS lama.
 - Design token utama: brand `#2563eb`, brand-deep `#0b1b3f`, accent amber, background `#f5f7fb`.
+- Dark mode memakai atribut `data-theme="dark"` di `<html>`. Token warna di-override di `:root[data-theme='dark']` pada `src/styles/theme.css`; komponen sebaiknya memakai token (`--surface`, `--ink`, `--line`, `--danger-surface`, dst.) agar otomatis ikut tema.

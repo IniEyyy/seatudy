@@ -11,6 +11,7 @@ import {
 import { io } from 'socket.io-client';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
+import ThemeToggle from '../../Common/ThemeToggle';
 import './navbar.css';
 
 const ROLE_LABEL = {
@@ -187,6 +188,8 @@ function Navbar() {
         </nav>
 
         <div className="nav-actions">
+          <ThemeToggle />
+
           {user?.role === 'student' && (
             <Link to="/student/topup" className="balance-chip" title="Top up balance">
               <FaWallet />

@@ -26,7 +26,7 @@
   padding: 1.75rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: linear-gradient(120deg, #ffffff 0%, #f8fbff 60%, #eef5ff 100%);
+  background: var(--hero-gradient);
   box-shadow: var(--shadow-sm);
 }
 
@@ -43,7 +43,7 @@
   padding: 0.22rem 0.6rem;
   border-radius: var(--radius-pill);
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
   font-size: 0.72rem;
   font-weight: 800;
 }
@@ -74,7 +74,7 @@
   padding: 0.9rem 1.2rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--glass);
   backdrop-filter: blur(4px);
 }
 
@@ -168,7 +168,7 @@
 
 .ic-item-icon.is-amber {
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .ic-item-body {
@@ -218,25 +218,25 @@ a.ic-item-title:hover {
 
 .ic-delete:hover {
   background: var(--danger-soft);
-  color: #b91c1c;
+  color: var(--danger-ink);
 }
 
-@media (max-width: 900px) {
 .ic-alert {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1.1rem;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
-  background: #fff5f5;
-  color: #b91c1c;
+  background: var(--danger-surface-alt);
+  color: var(--danger-ink);
   font-size: 0.86rem;
   font-weight: 600;
 }
 
-.ic-hero {
+@media (max-width: 900px) {
+  .ic-hero {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.2rem;

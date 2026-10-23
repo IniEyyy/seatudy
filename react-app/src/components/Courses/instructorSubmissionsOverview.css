@@ -56,7 +56,7 @@
 }
 
 .submissions-summary strong.warn {
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .submissions-summary span {
@@ -114,7 +114,7 @@
 }
 
 .submissions-table tbody tr:hover {
-  background: #fbfdff;
+  background: var(--surface-muted);
 }
 
 .row-course {
@@ -170,7 +170,7 @@
 
 .progress-label em {
   margin-left: 0.3rem;
-  color: #b45309;
+  color: var(--warning-ink);
   font-size: 0.64rem;
   font-style: normal;
 }

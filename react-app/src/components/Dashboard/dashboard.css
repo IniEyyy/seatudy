@@ -213,10 +213,10 @@
   align-items: baseline;
   gap: 0.5rem;
   padding: 0.85rem 1rem;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--danger-surface);
+  color: var(--danger-ink-strong);
   font-size: 0.85rem;
 }
 
@@ -285,7 +285,7 @@
 
 .tone-amber .stat-icon {
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .tone-mint .stat-icon {
@@ -294,8 +294,8 @@
 }
 
 .tone-violet .stat-icon {
-  background: #f3e8ff;
-  color: #7e22ce;
+  background: var(--violet-soft);
+  color: var(--violet);
 }
 
 .dash-columns {

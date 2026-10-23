@@ -73,10 +73,10 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.8rem 1rem;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--danger-surface);
+  color: var(--danger-ink-strong);
   font-size: 0.84rem;
 }
 
@@ -230,11 +230,11 @@
 }
 
 .catalog-card-enrolled {
-  border-color: #bbf7d0;
+  border-color: var(--success-border);
 }
 
 .catalog-card-bought {
-  border-color: #fde68a;
+  border-color: var(--accent-border);
 }
 
 .catalog-card-top {

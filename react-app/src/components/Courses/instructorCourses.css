@@ -126,18 +126,18 @@
 
 .teach-delete:hover {
   background: var(--danger-soft);
-  color: #b91c1c;
+  color: var(--danger-ink);
 }
 
 .teach-open {
   margin-left: auto;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
 }
 
 .teach-open:hover {
   background: var(--brand-strong);
-  color: #fff;
+  color: var(--on-brand);
 }
 
 @media (max-width: 1000px) {

@@ -162,8 +162,13 @@
   left: 3px;
   bottom: 3px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
   transition: transform 0.2s ease;
+}
+
+:root[data-theme='dark'] .slider:before {
+  background: var(--ink);
 }
 
 .switch input:checked + .slider {
@@ -214,7 +219,7 @@
 }
 
 .admin-table tbody tr:hover {
-  background: #fbfdff;
+  background: var(--surface-muted);
 }
 
 .admin-user {
@@ -266,13 +271,13 @@
 }
 
 .role-instructor {
-  background: #f3e8ff;
-  color: #7e22ce;
+  background: var(--violet-soft);
+  color: var(--violet);
 }
 
 .role-admin {
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .admin-balance {

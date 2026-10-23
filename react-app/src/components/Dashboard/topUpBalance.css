@@ -49,7 +49,7 @@
   height: 42px;
   border-radius: 12px;
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
   flex: none;
 }
 

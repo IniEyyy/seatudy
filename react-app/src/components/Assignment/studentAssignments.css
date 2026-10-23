@@ -56,7 +56,7 @@
 
 .sa-stat-icon.is-amber {
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .sa-stat-icon.is-blue {
@@ -90,10 +90,10 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1.1rem;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
-  background: #fff5f5;
-  color: #b91c1c;
+  background: var(--danger-surface-alt);
+  color: var(--danger-ink);
   font-size: 0.86rem;
   font-weight: 600;
 }
@@ -158,7 +158,7 @@
 }
 
 .sa-due.is-soon {
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .sa-status {
@@ -187,12 +187,12 @@
 
 .sa-status.is-late {
   background: var(--accent-soft);
-  color: #b45309;
+  color: var(--warning-ink);
 }
 
 .sa-status.is-pending {
   background: var(--danger-soft);
-  color: #b91c1c;
+  color: var(--danger-ink);
 }
 
 .sa-action-cell {
@@ -201,13 +201,13 @@
 
 .sa-open {
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   white-space: nowrap;
 }
 
 .sa-open:hover {
   background: var(--brand-strong);
-  color: #fff;
+  color: var(--on-brand);
 }
 
 .sa-row-skeleton {
