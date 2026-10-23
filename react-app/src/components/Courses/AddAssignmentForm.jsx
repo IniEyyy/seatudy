@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
 import './addAssignmentForm.css';
 
 function AddAssignmentForm({ courseId, onAdd }) {
+  const { showToast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
 
+    setSaving(true);
     try {
       const res = await fetch(`http://localhost:5000/api/instructor/courses/${courseId}/assignments`, {
         method: 'POST',
@@ -20,45 +24,68 @@ function AddAssignmentForm({ courseId, onAdd }) {
         body: JSON.stringify({ title, description, due_date: dueDate }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      alert('Assignment added successfully!');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not create assignment');
+      showToast('Assignment added successfully.', 'success');
       onAdd();
       setTitle('');
       setDescription('');
       setDueDate('');
     } catch (err) {
-      alert('Failed to add assignment: ' + err.message);
+      showToast(err.message, 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <form className="add-assignment-form" onSubmit={handleSubmit}>
-      <h4>Add Assignment</h4>
+    <form className="af" onSubmit={handleSubmit}>
+      <header className="af-head">
+        <h3>Add assignment</h3>
+        <p>Give learners a clear brief and a due date they can plan around.</p>
+      </header>
 
-      <input
-        type="text"
-        placeholder="Assignment Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-      />
+      <div className="af-grid">
+        <label className="field">
+          <span>Title</span>
+          <input
+            className="input"
+            type="text"
+            placeholder="e.g. Build a reusable React card"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </label>
 
-      <textarea
-        placeholder="Assignment Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        required
-      />
+        <label className="field">
+          <span>Due date</span>
+          <input
+            className="input"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            required
+          />
+        </label>
 
-      <input
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        required
-      />
+        <label className="field af-full">
+          <span>Description</span>
+          <textarea
+            className="input"
+            placeholder="What should learners submit, and how will it be graded?"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+        </label>
+      </div>
 
-      <button type="submit">Create Assignment</button>
+      <div className="af-actions">
+        <button type="submit" className="btn" disabled={saving}>
+          {saving ? 'Creating…' : 'Create assignment'}
+        </button>
+      </div>
     </form>
   );
 }

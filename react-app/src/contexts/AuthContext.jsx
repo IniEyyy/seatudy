@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
           setUser(data);
         } else {
           localStorage.removeItem('token');
+          setToken('');
           setUser(null);
         }
       } catch (err) {

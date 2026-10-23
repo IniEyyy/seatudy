@@ -1,161 +1,297 @@
-import React, { useEffect, useState, useRef, useContext } from 'react';
-import { FaBell } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../../contexts/AuthContext';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  FaBell,
+  FaBars,
+  FaChevronDown,
+  FaSignOutAlt,
+  FaTimes,
+  FaWallet,
+} from 'react-icons/fa';
 import { io } from 'socket.io-client';
+import { AuthContext } from '../../../contexts/AuthContext';
+import { useToast } from '../../../contexts/ToastContext';
 import './navbar.css';
+
+const ROLE_LABEL = {
+  student: 'Student',
+  instructor: 'Instructor',
+  admin: 'Administrator',
+};
+
+function getInitials(name = '') {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'S';
+}
+
+function timeAgo(value) {
+  if (!value) return '';
+  const diff = Date.now() - new Date(value).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(value).toLocaleDateString();
+}
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
+  const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [notifications, setNotifications] = useState([]);
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
+  const [openNotifications, setOpenNotifications] = useState(false);
+  const [openUserMenu, setOpenUserMenu] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const notificationRef = useRef(null);
+  const userMenuRef = useRef(null);
   const token = localStorage.getItem('token');
 
+  const unreadCount = notifications.filter((item) => !item.is_read).length;
+
   useEffect(() => {
-    if (!user) return;
+    setMobileOpen(false);
+    setOpenNotifications(false);
+    setOpenUserMenu(false);
+  }, [location.pathname]);
 
-    // Connect to Socket.IO server
-    const socket = io('http://localhost:5000');
+  useEffect(() => {
+    if (!user) return undefined;
 
-    // Register current user on socket server
+    const socket = io('http://localhost:5000', { transports: ['websocket', 'polling'] });
     socket.emit('register', user.id);
-
-    // Listen for new real-time notifications
     socket.on('new-notification', (notif) => {
       setNotifications((prev) => [notif, ...prev]);
     });
 
-    return () => {
-      socket.disconnect();
-    };
+    return () => socket.disconnect();
   }, [user]);
 
   useEffect(() => {
     if (!user || !token) return;
 
-    // Fetch notifications from backend
-    fetch(`http://localhost:5000/api/notifications`, {
-      headers: { Authorization: `Bearer ${token}` }
+    fetch('http://localhost:5000/api/notifications', {
+      headers: { Authorization: `Bearer ${token}` },
     })
-      .then(res => res.json())
-      .then(data => {
-        if (data && Array.isArray(data)) {
-          setNotifications(data);
-        }
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setNotifications(data);
       })
-      .catch(err => console.error('❌ Failed to fetch notifications:', err));
+      .catch(() => {});
   }, [user, token]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setOpen(false);
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setOpenNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setOpenUserMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    showToast('You have been signed out.', 'info');
+    navigate('/login');
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await fetch('http://localhost:5000/api/notifications/mark-all-read', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
+      showToast('All notifications marked as read.', 'success');
+    } catch {
+      showToast('Could not update notifications.', 'error');
+    }
+  };
+
+  const navLinkClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
+
   return (
-    <nav className="navbar">
-      <h2>Seatudy {user ? user.role : 'Guest'}</h2>
-      <div className="navbar-links">
-        <Link to="/dashboard">Dashboard</Link>
-        {user?.role === 'student' && (
-          <>
-            <Link to="/dashboard/student/courses">Courses</Link>
-            <Link to="/student/topup">TopUp</Link>
-          </>
-        )}
-        {user?.role === 'instructor' && (
-          <>
-            <Link to="/dashboard/instructor/courses">My Courses</Link>
-            <Link to="/dashboard/instructor/submissions">Submissions</Link>
-          </>
-        )}
-        {user?.role === 'admin' && (
-          <>
-            <Link to="/dashboard/courses">Courses</Link>
-            <Link to="/dashboard/admin">Users</Link>
-          </>
-        )}
-        {user ? (
-          <Link to="/login" onClick={handleLogout}>Logout</Link>
-        ) : (
-          <Link to="/login">Login</Link>
-        )}
-      </div>
+    <header className="navbar">
+      <div className="nav-inner">
+        <Link to={user ? '/dashboard' : '/login'} className="brand" aria-label="Seatudy home">
+          <span className="brand-mark">S</span>
+          <span className="brand-text">
+            Seatudy
+            <small>Learning, organised.</small>
+          </span>
+        </Link>
 
-      <div className="navbar-right">
-        {user && (
-          <div className="notification-container" ref={dropdownRef}>
-            {/* Notification button */}
-            <button
-              className="notification-icon"
-              onClick={() => setOpen(!open)}
-            >
-              <FaBell size={20} />
-              {notifications.length > 0 && (
-                <span className="notification-badge">{notifications.length}</span>
+        <nav className={`nav-links${mobileOpen ? ' open' : ''}`} aria-label="Main navigation">
+          {user ? (
+            <>
+              <NavLink to="/dashboard" end className={navLinkClass}>
+                Dashboard
+              </NavLink>
+
+              {user.role === 'student' && (
+                <>
+                  <NavLink to="/dashboard/student/courses" className={navLinkClass}>
+                    My Courses
+                  </NavLink>
+                  <NavLink to="/dashboard/student/assignments" className={navLinkClass}>
+                    Assignments
+                  </NavLink>
+                  <NavLink to="/student/topup" className={navLinkClass}>
+                    Top up
+                  </NavLink>
+                </>
               )}
-            </button>
 
-            {/* Dropdown with animation */}
-            {open && (
-              <div className={`notification-dropdown ${open ? 'open' : 'close'}`}>
-                <div className="notif-header">
-                  <h4>Notifications</h4>
-                  {notifications.length > 0 && (
-                    <button
-                      className="mark-read-btn"
-                      onClick={() => {
-                        fetch('http://localhost:5000/api/notifications/mark-all-read', {
-                          method: 'PUT',
-                          headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                          }
-                        })
-                          .then(res => res.json())
-                          .then(() => {
-                            setNotifications([]); // Clear notifications in state
-                          })
-                          .catch(err => console.error('Failed to mark all read:', err));
-                      }}
-                    >
-                      Mark all as read
-                    </button>
+              {user.role === 'instructor' && (
+                <>
+                  <NavLink to="/dashboard/instructor/courses" className={navLinkClass}>
+                    My Courses
+                  </NavLink>
+                  <NavLink to="/dashboard/instructor/submissions" className={navLinkClass}>
+                    Submissions
+                  </NavLink>
+                </>
+              )}
+
+              {user.role === 'admin' && (
+                <>
+                  <NavLink to="/dashboard/courses" className={navLinkClass}>
+                    Course catalogue
+                  </NavLink>
+                  <NavLink to="/dashboard/admin" className={navLinkClass}>
+                    Users
+                  </NavLink>
+                </>
+              )}
+            </>
+          ) : (
+            <NavLink to="/login" className={navLinkClass}>
+              Sign in
+            </NavLink>
+          )}
+        </nav>
+
+        <div className="nav-actions">
+          {user?.role === 'student' && (
+            <Link to="/student/topup" className="balance-chip" title="Top up balance">
+              <FaWallet />
+              <span>${Number(user.balance || 0).toFixed(2)}</span>
+            </Link>
+          )}
+
+          {user && (
+            <div className="notification-container" ref={notificationRef}>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setOpenNotifications((value) => !value)}
+                aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
+                aria-expanded={openNotifications}
+              >
+                <FaBell />
+                {unreadCount > 0 && <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+              </button>
+
+              {openNotifications && (
+                <div className="notification-dropdown">
+                  <div className="notif-header">
+                    <div>
+                      <strong>Notifications</strong>
+                      <span>{unreadCount ? `${unreadCount} unread` : 'You are all caught up'}</span>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button type="button" className="mark-read-btn" onClick={handleMarkAllRead}>
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <p className="no-notifications">Nothing new right now.</p>
+                  ) : (
+                    <ul>
+                      {notifications.slice(0, 8).map((item) => (
+                        <li key={item.id} className={item.is_read ? 'read' : ''}>
+                          <span className="notif-dot" />
+                          <div>
+                            <p>{item.message}</p>
+                            <time>{timeAgo(item.created_at)}</time>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
+              )}
+            </div>
+          )}
 
-                {notifications.length === 0 ? (
-                  <p className="no-notifications">No new notifications</p>
-                ) : (
-                  <ul>
-                    {notifications.map((n) => (
-                      <li key={n.id}>{n.text || n.message}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        <div className="user-info">
-          <span className="username">👤{user?.username || 'Guest'}</span>
-          <span className="balance">💰${(!user || user.balance === 0) ? 0 : user?.balance}</span>
+          {user && (
+            <div className="user-menu" ref={userMenuRef}>
+              <button
+                type="button"
+                className="user-trigger"
+                onClick={() => setOpenUserMenu((value) => !value)}
+                aria-expanded={openUserMenu}
+              >
+                <span className="avatar">{getInitials(user.username)}</span>
+                <span className="user-trigger-text">
+                  <strong>{user.username}</strong>
+                  <small>{ROLE_LABEL[user.role] || user.role}</small>
+                </span>
+                <FaChevronDown className="chevron" />
+              </button>
+
+              {openUserMenu && (
+                <div className="user-dropdown">
+                  <div className="user-dropdown-head">
+                    <span className="avatar large">{getInitials(user.username)}</span>
+                    <div>
+                      <strong>{user.username}</strong>
+                      <span>{user.email}</span>
+                    </div>
+                  </div>
+                  <Link to="/dashboard" className="user-dropdown-link">
+                    Dashboard
+                  </Link>
+                  <button type="button" className="user-dropdown-link danger" onClick={handleLogout}>
+                    <FaSignOutAlt />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {user && (
+            <button
+              type="button"
+              className="menu-toggle"
+              onClick={() => setMobileOpen((value) => !value)}
+              aria-label="Toggle navigation"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <FaTimes /> : <FaBars />}
+            </button>
+          )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 }
 

@@ -17,7 +17,8 @@ seatudy/
 ├── react-app/            # Frontend (React + Vite)
 │   └── src/
 │       ├── components/   # Auth, Courses, Dashboard, Assignment, Review, Forum
-│       ├── contexts/     # AuthContext, ThemeContext
+│       ├── contexts/     # AuthContext, ThemeContext, ToastContext
+│       ├── styles/       # theme.css (design token + komponen dasar)
 │       └── App.jsx       # Routing
 └── server/               # Backend (Express + PostgreSQL)
     ├── controllers/      # Route handlers
@@ -157,6 +158,11 @@ Tersedia setelah menjalankan `db/seed.sql`:
 - [x] Forum diskusi per course
 - [x] Notifikasi real-time (Socket.IO)
 - [x] Admin dashboard (kelola user + lihat daftar course)
+- [x] Dashboard berbeda per role dengan statistik dan aktivitas terbaru
+- [x] Pencarian, filter, dan sorting pada katalog course
+- [x] Toast notification konsisten (pengganti `alert`)
+- [x] Health check database di `GET /api/health`
+- [x] Proteksi dasar: Helmet, rate limit login/register, JWT 8 jam
 
 ---
 
@@ -214,3 +220,5 @@ Pastikan role akun sesuai halaman yang dibuka. Student hanya bisa membuka halama
 - Folder upload dibuat otomatis saat server dijalankan.
 - Schema bersifat idempotent (`CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang.
 - `server/node_modules` sengaja tidak lagi dilacak git; jalankan `npm install`.
+- Styling memakai token di `src/styles/theme.css` (warna, radius, shadow, font Sora/Manrope). Komponen baru memakai class ber-prefix (`catalog-`, `teach-`, `sc-`, `sa-`, `ic-`, `isub-`) agar tidak bentrok dengan CSS lama.
+- Design token utama: brand `#2563eb`, brand-deep `#0b1b3f`, accent amber, background `#f5f7fb`.

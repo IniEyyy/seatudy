@@ -1,76 +1,163 @@
 .my-courses {
-  padding: 2rem;
-  max-width: 800px;
-  margin: auto;
-}
-
-.my-courses h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.course-card {
-  background-color: #f5f9ff;
-  border-left: 5px solid #007bff;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.course-card h3 {
-  margin: 0;
-  color: #007bff;
-}
-
-.course-card p {
-  margin: 0.25rem 0;
-}
-
-.my-courses .button-group {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.my-courses .button-group button {
-  min-height: 38px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 6px;
-  background-color: #007bff;
-  color: #fff;
-  font-size: 0.875rem;
+.teach-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.teach-header h1 {
+  margin: 0.55rem 0 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.5rem);
   font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  letter-spacing: -0.035em;
 }
 
-.my-courses .create-course-btn {
-  min-height: 40px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 6px;
-  background-color: #007bff;
-  color: #fff;
+.teach-header p {
+  max-width: 620px;
+  margin: 0.5rem 0 0;
+  color: var(--ink-soft);
   font-size: 0.9rem;
+}
+
+.teach-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.teach-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.teach-card:hover {
+  border-color: var(--brand-200);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.teach-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.teach-card h2 {
+  margin: 0;
+  font-size: 1.02rem;
   font-weight: 600;
-  cursor: pointer;
+  line-height: 1.35;
 }
 
-.my-courses .create-course-btn:hover {
-  background-color: #0056b3;
+.teach-description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0.5rem 0 0.9rem;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
-.my-courses .button-group button:hover {
-  background-color: #0056b3;
+.teach-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
-.my-courses .button-group button.delete-btn {
-  background-color: #dc2626;
+.teach-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
-.my-courses .button-group button.delete-btn:hover {
-  background-color: #b91c1c;
+.teach-meta svg {
+  color: var(--accent);
+  font-size: 0.68rem;
+}
+
+.teach-price {
+  margin-left: auto;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.teach-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.teach-actions .btn {
+  padding: 0 0.55rem;
+  font-size: 0.72rem;
+}
+
+.teach-delete {
+  color: var(--danger);
+}
+
+.teach-delete:hover {
+  background: var(--danger-soft);
+  color: #b91c1c;
+}
+
+.teach-open {
+  margin-left: auto;
+  background: var(--brand);
+  color: #fff;
+}
+
+.teach-open:hover {
+  background: var(--brand-strong);
+  color: #fff;
+}
+
+@media (max-width: 1000px) {
+  .teach-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teach-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .teach-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .create-course-btn {
+    width: 100%;
+  }
 }

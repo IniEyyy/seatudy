@@ -1,34 +1,110 @@
-.forum {
-  margin-top: 1rem;
+.fd {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fd-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
   padding: 1rem;
-  background-color: var(--bg-light);
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
 }
 
-.forum-form textarea {
-  width: 100%;
-  min-height: 80px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  resize: vertical;
+.fd-composer textarea.input {
+  min-height: 84px;
 }
 
-.forum-form button {
-  background-color: #3498db;
-  color: white;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.fd-composer .btn {
+  align-self: flex-end;
 }
 
-.forum-messages {
+.fd-error {
+  padding: 0.8rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  background: #fff5f5;
+  color: #b91c1c;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.fd-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
   list-style: none;
-  padding-left: 0;
 }
 
-.forum-messages li {
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 0.5rem;
+.fd-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.fd-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand-deep);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.fd-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.fd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.fd-meta strong {
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.fd-meta span {
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.fd-body p {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fd-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.fd-skeleton {
+  height: 76px;
 }

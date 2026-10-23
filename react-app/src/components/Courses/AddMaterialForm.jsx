@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+﻿import { useRef, useState } from 'react';
+import { FaCloudUploadAlt, FaFileAlt, FaTimes } from 'react-icons/fa';
+import { useToast } from '../../contexts/ToastContext';
 import './addMaterialForm.css';
 
 function AddMaterialForm({ courseId, onAdd }) {
+  const { showToast } = useToast();
+  const fileInput = useRef(null);
   const [description, setDescription] = useState('');
   const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const token = localStorage.getItem('token');
 
   const handleDrop = (e) => {
@@ -26,16 +31,21 @@ function AddMaterialForm({ courseId, onAdd }) {
     const updatedFiles = [...files];
     updatedFiles.splice(index, 1);
     setFiles(updatedFiles);
+    if (updatedFiles.length === 0 && fileInput.current) fileInput.current.value = '';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (files.length === 0) return alert('Please select at least one file.');
+    if (files.length === 0) {
+      showToast('Please select at least one file.', 'error');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('content', description);
     files.forEach((file) => formData.append('files', file));
 
+    setUploading(true);
     try {
       const res = await fetch(`http://localhost:5000/api/instructor/courses/${courseId}/materials`, {
         method: 'POST',
@@ -43,46 +53,64 @@ function AddMaterialForm({ courseId, onAdd }) {
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Upload failed');
 
-      alert('Material(s) uploaded successfully!');
+      showToast('Materials uploaded successfully.', 'success');
       setFiles([]);
       setDescription('');
+      if (fileInput.current) fileInput.current.value = '';
       onAdd();
     } catch (err) {
-      alert('Upload failed: ' + err.message);
+      showToast(err.message, 'error');
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-    <form className="add-material-form" onSubmit={handleSubmit} encType="multipart/form-data">
-      <h4>Add Material</h4>
+    <form className="mf" onSubmit={handleSubmit} encType="multipart/form-data">
+      <header className="mf-head">
+        <div>
+          <h3>Add material</h3>
+          <p>Drop files here or pick them from your device. Multiple files are supported.</p>
+        </div>
+      </header>
+
       {files.length > 0 && (
-        <ul className="file-list">
+        <ul className="mf-files">
           {files.map((file, index) => (
-            <li key={index}>
-              {file.name}
+            <li key={`${file.name}-${index}`}>
+              <FaFileAlt />
+              <span>{file.name}</span>
               <button
                 type="button"
-                className="remove-btn"
+                className="mf-remove"
                 onClick={() => removeFile(index)}
-                title="Remove"
+                aria-label={`Remove ${file.name}`}
               >
-                ✕
+                <FaTimes />
               </button>
             </li>
           ))}
         </ul>
       )}
+
       <div
-        className={`dropzone ${dragActive ? 'active' : ''}`}
+        className={`mf-dropzone ${dragActive ? 'is-active' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-      > 
-        <p>Drag & Drop files here or click to select</p>
+        onClick={() => fileInput.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => event.key === 'Enter' && fileInput.current?.click()}
+      >
+        <FaCloudUploadAlt />
+        <strong>Drag &amp; drop files here</strong>
+        <span>or click to browse</span>
         <input
+          ref={fileInput}
           type="file"
           multiple
           onChange={(e) => setFiles(Array.from(e.target.files))}
@@ -90,14 +118,21 @@ function AddMaterialForm({ courseId, onAdd }) {
         />
       </div>
 
-      <textarea
-        placeholder="Material Description (optional)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-      <br/>
+      <label className="field">
+        <span>Description (optional)</span>
+        <textarea
+          className="input"
+          placeholder="What should learners know about these files?"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </label>
 
-      <button type="submit" className="submit-btn">Upload Material</button>
+      <div className="mf-actions">
+        <button type="submit" className="btn" disabled={uploading}>
+          {uploading ? 'Uploading…' : 'Upload material'}
+        </button>
+      </div>
     </form>
   );
 }

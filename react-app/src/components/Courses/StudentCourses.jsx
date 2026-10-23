@@ -1,204 +1,337 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './studentCourses.css';
+﻿import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { FaSearch, FaSlidersH } from 'react-icons/fa';
+import { AuthContext } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import CourseCard from './CourseCard.jsx';
+import './studentCourses.css';
+
+const API = 'http://localhost:5000';
 
 function StudentCourses() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState({ username: '', role: '', balance: 0 });
+  const { user, token, setUser } = useContext(AuthContext);
+  const { showToast } = useToast();
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [boughtCourses, setBoughtCourses] = useState([]);
   const [availableCourses, setAvailableCourses] = useState([]);
-  const token = localStorage.getItem('token');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState(null);
 
+  const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
   const [ratingFilter, setRatingFilter] = useState(0);
-  const [sortByPopularity, setSortByPopularity] = useState('');
-  const [sortByPrice, setSortByPrice] = useState('');
+  const [sortBy, setSortBy] = useState('popular');
 
-  let filteredCourses = availableCourses
-    .filter(course => {
-      return (
-        (categoryFilter === '' || course.category === categoryFilter) &&
-        (levelFilter === '' || course.level === levelFilter) &&
-        (ratingFilter === 0 || (course.rating_avg ?? 0) >= ratingFilter)
-      );
-    });
+  const isStudent = user?.role === 'student';
 
+  const loadData = useCallback(
+    async (showSkeleton = true) => {
+      if (!token) return;
+      if (showSkeleton) setLoading(true);
+      setError('');
 
-  if (sortByPrice === 'asc') {
-    filteredCourses.sort((a, b) => a.price - b.price);
-  } else if (sortByPrice === 'desc') {
-    filteredCourses.sort((a, b) => b.price - a.price);
-  }
-  if (sortByPopularity === 'asc') {
-    filteredCourses.sort((a, b) => a.student_count - b.student_count);
-  } else if (sortByPopularity === 'desc') {
-    filteredCourses.sort((a, b) => b.student_count - a.student_count);
-  }
+      try {
+        if (!isStudent) {
+          const res = await fetch(`${API}/api/public/courses`);
+          if (!res.ok) throw new Error('Could not load the course catalogue');
+          setAvailableCourses(await res.json());
+          return;
+        }
+
+        const res = await fetch(`${API}/api/student/courses`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Could not load your courses');
+        setEnrolledCourses(data.enrolled || []);
+        setBoughtCourses(data.bought || []);
+        setAvailableCourses(data.available || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        if (showSkeleton) setLoading(false);
+      }
+    },
+    [isStudent, token]
+  );
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (token) {
-          const profileRes = await fetch('http://localhost:5000/api/profile', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const userData = await profileRes.json();
-          setUser(userData);
+    loadData();
+  }, [loadData]);
 
-          if (userData.role !== 'student') {
-            const publicRes = await fetch('http://localhost:5000/api/public/courses');
-            const publicData = publicRes.ok ? await publicRes.json() : [];
-            setAvailableCourses(publicData);
-            return;
-          }
-
-          const res = await fetch('http://localhost:5000/api/student/courses', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (res.status === 403) {
-            navigate('/dashboard');
-            return;
-          }
-
-          const data = await res.json();
-          setEnrolledCourses(data.enrolled || []);
-          setBoughtCourses(data.bought || []);
-          setAvailableCourses(data.available || []);
-        } else {
-          const res = await fetch('http://localhost:5000/api/public/courses');
-          const publicData = await res.json();
-          setAvailableCourses(publicData);
-        }
-      } catch (err) {
-        console.error('Failed to load courses:', err);
-      }
-    };
-
-    fetchData();
-  }, [token, navigate]);
+  const refreshProfile = async () => {
+    const res = await fetch(`${API}/api/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const profile = await res.json();
+      setUser(profile);
+    }
+  };
 
   const handleBuy = async (courseId) => {
+    setBusyId(courseId);
     try {
-      const res = await fetch(`http://localhost:5000/api/student/buy/${courseId}`, {
+      const res = await fetch(`${API}/api/student/buy/${courseId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      alert(data.message);
-      window.location.reload();
-    } catch {
-      alert('Purchase failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Purchase failed');
+      showToast(data.message || 'Course purchased.', 'success');
+      await Promise.all([loadData(false), refreshProfile()]);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setBusyId(null);
     }
   };
 
   const handleEnroll = async (courseId) => {
+    setBusyId(courseId);
     try {
-      const res = await fetch(`http://localhost:5000/api/student/enroll/${courseId}`, {
+      const res = await fetch(`${API}/api/student/enroll/${courseId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      alert(data.message);
-      window.location.reload();
-    } catch {
-      alert('Enrollment failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Enrollment failed');
+      showToast(data.message || 'You are enrolled.', 'success');
+      await loadData(false);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setBusyId(null);
     }
   };
 
+  const categories = useMemo(
+    () => [...new Set(availableCourses.map((course) => course.category).filter(Boolean))].sort(),
+    [availableCourses]
+  );
+
+  const filteredCourses = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const list = availableCourses.filter((course) => {
+      const matchesQuery =
+        !query ||
+        course.title?.toLowerCase().includes(query) ||
+        course.description?.toLowerCase().includes(query) ||
+        course.category?.toLowerCase().includes(query);
+
+      return (
+        matchesQuery &&
+        (categoryFilter === '' || course.category === categoryFilter) &&
+        (levelFilter === '' || course.level === levelFilter) &&
+        (ratingFilter === 0 || (Number(course.rating_avg) || 0) >= ratingFilter)
+      );
+    });
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'price-asc') return Number(a.price) - Number(b.price);
+      if (sortBy === 'price-desc') return Number(b.price) - Number(a.price);
+      if (sortBy === 'rating') return (Number(b.rating_avg) || 0) - (Number(a.rating_avg) || 0);
+      if (sortBy === 'newest') return b.id - a.id;
+      return (b.student_count || 0) - (a.student_count || 0);
+    });
+  }, [availableCourses, categoryFilter, levelFilter, ratingFilter, search, sortBy]);
+
+  const hasActiveFilters =
+    search || categoryFilter || levelFilter || ratingFilter || sortBy !== 'popular';
+
+  const resetFilters = () => {
+    setSearch('');
+    setCategoryFilter('');
+    setLevelFilter('');
+    setRatingFilter(0);
+    setSortBy('popular');
+  };
+
+  const detailPath = (course) =>
+    isStudent ? `/dashboard/student/courses/${course.id}` : `/dashboard/courses/${course.id}`;
+
+  const renderGrid = (courses, status) => (
+    <div className="catalog-grid">
+      {courses.map((course) => (
+        <CourseCard
+          key={course.id}
+          course={course}
+          status={status}
+          detailPath={detailPath(course)}
+          onBuy={handleBuy}
+          onEnroll={handleEnroll}
+          busy={busyId === course.id}
+        />
+      ))}
+    </div>
+  );
+
   return (
-    <div className="student-courses">
-      {user.role === 'student' && (
-        <>
-          <section className="course-section">
-            <h2>Enrolled Courses</h2>
-            <div className="course-grid">
-              {enrolledCourses.map(course => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  userRole={user.role}
-                  hasPurchased={true}
-                  hasEnrolled={true}
-                  onBuy={handleBuy}
-                  onEnroll={handleEnroll}
-                />
-              ))}
+    <div className="page courses-page">
+      <header className="courses-header">
+        <div>
+          <span className="eyebrow">{isStudent ? 'My learning' : 'Catalogue'}</span>
+          <h1>{isStudent ? 'Your courses, in one place' : 'Explore the course catalogue'}</h1>
+          <p>
+            {isStudent
+              ? 'Pick up an active course, finish an enrolment, or find your next subject.'
+              : 'A read-only view of every published course, updated live from the platform.'}
+          </p>
+        </div>
+        {isStudent && !loading && (
+          <div className="courses-summary">
+            <div>
+              <strong>{enrolledCourses.length}</strong>
+              <span>Enrolled</span>
             </div>
+            <div>
+              <strong>{boughtCourses.length}</strong>
+              <span>Ready to enrol</span>
+            </div>
+            <div>
+              <strong>{availableCourses.length}</strong>
+              <span>Available</span>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {error && (
+        <div className="courses-alert" role="alert">
+          <span>{error}</span>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={() => loadData()}>
+            Try again
+          </button>
+        </div>
+      )}
+
+      {isStudent && (
+        <>
+          <section className="courses-section">
+            <div className="section-heading">
+              <h2>In progress</h2>
+              <span>{enrolledCourses.length} enrolled</span>
+            </div>
+
+            {loading ? (
+              <div className="catalog-grid">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div className="catalog-card skeleton" key={index} style={{ minHeight: 250 }} />
+                ))}
+              </div>
+            ) : enrolledCourses.length === 0 ? (
+              <div className="empty-state">
+                <strong>No active courses yet.</strong>
+                <span>Buy or claim a course below, then enrol to unlock materials and assignments.</span>
+                <a className="btn btn-sm btn-secondary" href="#available-courses">
+                  Browse available courses
+                </a>
+              </div>
+            ) : (
+              renderGrid(enrolledCourses, 'enrolled')
+            )}
           </section>
 
-          <section className="course-section">
-            <h2>Bought Courses (Not Enrolled)</h2>
-            <div className="course-grid">
-              {boughtCourses.map(course => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  userRole={user.role}
-                  hasPurchased={true}
-                  hasEnrolled={false}
-                  onBuy={handleBuy}
-                  onEnroll={handleEnroll}
-                />
-              ))}
-            </div>
-          </section>
+          {boughtCourses.length > 0 && (
+            <section className="courses-section">
+              <div className="section-heading">
+                <h2>Ready to enrol</h2>
+                <span>Already purchased</span>
+              </div>
+              {renderGrid(boughtCourses, 'bought')}
+            </section>
+          )}
         </>
       )}
 
-      <section className="course-section">
-        <h2>{user.role && user.role !== 'student' ? 'Browse Courses' : 'Available Courses'}</h2>
-        <div className="filters">
-          <select onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="">All Categories</option>
-            {[...new Set(availableCourses.map(c => c.category).filter(Boolean))]
-              .sort()
-              .map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-          </select>
-
-          <select onChange={(e) => setLevelFilter(e.target.value)}>
-            <option value="">All Levels</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-          </select>
-
-          <select onChange={(e) => setRatingFilter(Number(e.target.value))}>
-            <option value={0}>All Ratings</option>
-            <option value={4}>4 stars & up</option>
-            <option value={3}>3 stars & up</option>
-            <option value={2}>2 stars & up</option>
-          </select>
-
-          <select onChange={(e) => setSortByPopularity(e.target.value)}>
-            <option value="desc">Most Popular</option>
-            <option value="asc">Least Popular</option>
-          </select>
-
-          <select onChange={e => setSortByPrice(e.target.value)}>
-            <option value="asc">Price: Low to High</option>
-            <option value="desc">Price: High to Low</option>
-          </select>
+      <section className="courses-section" id="available-courses">
+        <div className="section-heading">
+          <h2>{isStudent ? 'Available courses' : 'All courses'}</h2>
+          <span>
+            {filteredCourses.length} result{filteredCourses.length === 1 ? '' : 's'}
+          </span>
         </div>
 
-        <div className="course-grid">
-          {filteredCourses.map(course => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              userRole={user.role}
-              hasPurchased={false}
-              hasEnrolled={false}
-              onBuy={handleBuy}
-              onEnroll={handleEnroll}
+        <div className="catalog-toolbar">
+          <div className="catalog-search">
+            <FaSearch />
+            <input
+              type="search"
+              placeholder="Search by title, topic, or category"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Search courses"
             />
-          ))}
+          </div>
+
+          <div className="catalog-filters">
+            <span className="filters-label">
+              <FaSlidersH />
+              Filter
+            </span>
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category">
+              <option value="">All categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+
+            <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value)} aria-label="Level">
+              <option value="">All levels</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+
+            <select
+              value={ratingFilter}
+              onChange={(event) => setRatingFilter(Number(event.target.value))}
+              aria-label="Rating"
+            >
+              <option value={0}>Any rating</option>
+              <option value={4}>4 stars & up</option>
+              <option value={3}>3 stars & up</option>
+              <option value={2}>2 stars & up</option>
+            </select>
+
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort">
+              <option value="popular">Most popular</option>
+              <option value="newest">Newest first</option>
+              <option value="rating">Highest rated</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+            </select>
+
+            {hasActiveFilters && (
+              <button type="button" className="filter-reset" onClick={resetFilters}>
+                Reset
+              </button>
+            )}
+          </div>
         </div>
+
+        {loading ? (
+          <div className="catalog-grid">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div className="catalog-card skeleton" key={index} style={{ minHeight: 250 }} />
+            ))}
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="empty-state">
+            <strong>No courses match those filters.</strong>
+            <span>Try a different search term or clear the filters.</span>
+            {hasActiveFilters && (
+              <button type="button" className="btn btn-sm btn-secondary" onClick={resetFilters}>
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : (
+          renderGrid(filteredCourses, isStudent ? 'available' : 'browse')
+        )}
       </section>
     </div>
   );

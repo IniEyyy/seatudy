@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+﻿import { useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 import Register from './components/Auth/RegisterPage.jsx';
@@ -20,62 +20,138 @@ import InstructorAssignmentSubmissions from './components/Courses/InstructorAssi
 
 import StudentAssignments from './components/Assignment/StudentAssignments.jsx';
 import NotFound from './components/NotFound';
+import ProtectedRoute from './components/Common/ProtectedRoute.jsx';
 
 import { AuthContext } from './contexts/AuthContext';
 
-function App() {
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const { setUser } = useContext(AuthContext);
+const AUTH_PATHS = ['/login', '/register', '/logout'];
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken && storedToken !== token) {
-      setToken(storedToken);
-    }
-  }, [token]);
+function AppLayout() {
+  const { token } = useContext(AuthContext);
+  const location = useLocation();
+  const isAuthPage = AUTH_PATHS.includes(location.pathname);
 
   return (
+    <div className="app-shell">
+      {!isAuthPage && <Navbar />}
+      <main className="app-main">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/logout" element={<Logout />} />
+
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/courses"
+            element={
+              <ProtectedRoute>
+                <StudentCourses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/courses/:id"
+            element={
+              <ProtectedRoute>
+                <StudentCourse editable={false} token={token} />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/admin"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/instructor/courses"
+            element={
+              <ProtectedRoute roles={['instructor']}>
+                <InstructorCourses token={token} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/instructor/courses/:id"
+            element={
+              <ProtectedRoute roles={['instructor']}>
+                <InstructorCourse editable token={token} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/instructor/submissions"
+            element={
+              <ProtectedRoute roles={['instructor']}>
+                <InstructorSubmissionsOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/instructor/assignments/:assignmentId/submissions"
+            element={
+              <ProtectedRoute roles={['instructor']}>
+                <InstructorAssignmentSubmissions />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student/topup"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <TopUp />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/student/courses"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentCourses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/student/assignments"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentAssignments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/student/courses/:id"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentCourse editable={false} token={token} />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
     <Router>
-      <Navbar />
-      <Routes>
-        {/* PUBLIC */}
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/logout" element={<Logout />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/courses" element={<StudentCourses />} />
-
-        {/* ADMIN */}
-        <Route path="/dashboard/admin" element={<AdminDashboard />} />
-
-        {/* INSTRUCTOR */}
-        <Route path="/dashboard/instructor/courses" element={<InstructorCourses token={token} />} />
-        <Route path="/dashboard/instructor/courses/:id" element={<InstructorCourse editable token={token} />} />
-        <Route path="/dashboard/instructor/submissions" element={<InstructorSubmissionsOverview />} />
-        <Route
-          path="/dashboard/instructor/assignments/:assignmentId/submissions"
-          element={<InstructorAssignmentSubmissions />}
-        />
-
-        {/* STUDENT */}
-        <Route
-          path="/student/topup"
-          element={
-            <TopUp
-              token={token}
-              onTopUpSuccess={(newBalance) => {
-                setUser(prev => ({ ...prev, balance: newBalance }));
-              }}
-            />
-          }
-        />
-        <Route path="/dashboard/student/courses" element={<StudentCourses />} />
-        <Route path="/dashboard/student/assignments" element={<StudentAssignments />} />
-        <Route path="/dashboard/student/courses/:id" element={<StudentCourse editable={false} token={token} />} />
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <AppLayout />
     </Router>
   );
 }

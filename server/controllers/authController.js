@@ -2,12 +2,27 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 exports.register = async (req, res) => {
-  const { username, email, password } = req.body;
+  const username = String(req.body.username || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+
+  if (username.length < 3 || username.length > 80) {
+    return res.status(400).json({ message: 'Username must be between 3 and 80 characters' });
+  }
+  if (!EMAIL_PATTERN.test(email)) {
+    return res.status(400).json({ message: 'Please provide a valid email address' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
+  }
+
   try {
-    const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const userCheck = await pool.query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);
     if (userCheck.rows.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(409).json({ message: 'An account with this email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -16,7 +31,7 @@ exports.register = async (req, res) => {
       [username, email, hashedPassword, 'student']
     );
 
-    res.status(201).json({ message: 'User registered', user: newUser.rows[0] });
+    res.status(201).json({ message: 'Account created. You can sign in now.', user: newUser.rows[0] });
   } catch (err) {
     console.error('Register error:', err.message);
     res.status(500).json({ message: 'Server error' });
@@ -24,21 +39,24 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
 
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
   }
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1', [email]);
     const user = result.rows[0];
-    if (!user) return res.status(400).json({ message: 'User not found' });
+    if (!user) return res.status(401).json({ message: 'Email or password is incorrect' });
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ message: 'Invalid password' });
+    if (!valid) return res.status(401).json({ message: 'Email or password is incorrect' });
 
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '8h',
+    });
     res.json({ message: 'Login successful', token });
   } catch (err) {
     console.error('Login error:', err);

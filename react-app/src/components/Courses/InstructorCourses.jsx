@@ -1,29 +1,36 @@
-import React, { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaArrowRight, FaPlus, FaStar, FaUsers } from 'react-icons/fa';
 import './instructorCourses.css';
 import EditCourseForm from './EditCourseForm';
 import CreateCourseForm from './CreateCourseForm';
+import { useToast } from '../../contexts/ToastContext';
 
 function InstructorCourses() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [creatingCourse, setCreatingCourse] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (showSkeleton = true) => {
     const token = localStorage.getItem('token');
     if (!token) return;
+    if (showSkeleton) setLoading(true);
 
     try {
       const res = await fetch('http://localhost:5000/api/instructor/courses', {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) throw new Error('Failed to fetch courses');
-      const data = await res.json();
-      setCourses(data);
+      setCourses(await res.json());
+      setError('');
     } catch (err) {
-      console.error('Fetch courses error:', err.message);
+      setError(err.message);
+    } finally {
+      if (showSkeleton) setLoading(false);
     }
   };
 
@@ -31,47 +38,48 @@ function InstructorCourses() {
     fetchCourses();
   }, []);
 
-  const handleEditClick = (course) => {
-    setEditingCourse(course);
-  };
-
-  const handleCreateClick = () => {
-    setCreatingCourse(true);
-  };
-
   const handleDelete = async (courseId) => {
     const token = localStorage.getItem('token');
-    const confirmDelete = window.confirm('Are you sure you want to delete this course?');
-    if (!confirmDelete) return;
+    if (!window.confirm('Delete this course and all of its content?')) return;
 
     try {
       const res = await fetch(`http://localhost:5000/api/instructor/courses/${courseId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to delete');
-
-      alert('Course deleted successfully');
-      fetchCourses();
+      showToast('Course deleted.', 'success');
+      fetchCourses(false);
     } catch (err) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
   return (
-    <div className="my-courses">
-      <h2>My Courses</h2>
+    <div className="page my-courses">
+      <header className="teach-header">
+        <div>
+          <span className="eyebrow">Teaching</span>
+          <h1>Your courses</h1>
+          <p>Create new material, update assignments, and keep an eye on learner activity.</p>
+        </div>
+        <button type="button" className="btn create-course-btn" onClick={() => setCreatingCourse(true)}>
+          <FaPlus />
+          Create course
+        </button>
+      </header>
 
-      <button className="create-course-btn" onClick={handleCreateClick}>Create New Course</button>
+      {error && (
+        <div className="courses-alert" role="alert">
+          <span>{error}</span>
+        </div>
+      )}
 
       {creatingCourse && (
         <CreateCourseForm
           onClose={() => setCreatingCourse(false)}
-          onUpdate={fetchCourses}
+          onUpdate={() => fetchCourses(false)}
         />
       )}
 
@@ -79,36 +87,74 @@ function InstructorCourses() {
         <EditCourseForm
           course={editingCourse}
           onClose={() => setEditingCourse(null)}
-          onUpdate={fetchCourses}
+          onUpdate={() => fetchCourses(false)}
         />
       )}
 
-      {courses.length === 0 ? (
-        <p>You haven’t created any courses yet.</p>
+      {loading ? (
+        <div className="teach-grid">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div className="teach-card skeleton" key={index} style={{ minHeight: 230 }} />
+          ))}
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="empty-state">
+          <strong>You have not created a course yet.</strong>
+          <span>Start with a clear title and syllabus — you can add materials and assignments next.</span>
+          <button type="button" className="btn btn-sm" onClick={() => setCreatingCourse(true)}>
+            Create your first course
+          </button>
+        </div>
       ) : (
-        <div className="course-list">
+        <div className="teach-grid">
           {courses.map((course) => (
-            <div key={course.id} className="course-card">
-              <h3>{course.title}</h3>
-              <p>Description: {course.description}</p>
-              <p>Category: {course.category}</p>
-              <p>Level: {course.level}</p>
-              <p>Price: ${course.price}</p>
-              <p>Rating: {course.rating_avg ?? 'Not rated yet'}</p>
-              <p>Enrolled Students: {course.student_count ?? 0}</p>
-              <p>Created: {new Date(course.created_at).toLocaleDateString()}</p>
-              {course.updated_at && (
-                <p>Last Updated: {new Date(course.updated_at).toLocaleString()}</p>
-              )}
-
-              <div className="button-group">
-                <button onClick={() => navigate(`/dashboard/instructor/courses/${course.id}`)}>
-                  View Course Detail
-                </button>
-                <button onClick={() => handleEditClick(course)}>Edit</button>
-                <button onClick={() => handleDelete(course.id)} className="delete-btn">Delete</button>
+            <article key={course.id} className="teach-card">
+              <div className="teach-card-top">
+                <span className="catalog-tag">{course.category || 'General'}</span>
+                <span className="catalog-level">{course.level}</span>
               </div>
-            </div>
+              <h2>{course.title}</h2>
+              <p className="teach-description">{course.description}</p>
+
+              <div className="teach-meta">
+                <span>
+                  <FaUsers />
+                  {course.student_count ?? 0} learners
+                </span>
+                <span>
+                  <FaStar />
+                  {Number(course.rating_avg) ? Number(course.rating_avg).toFixed(1) : 'New'}
+                </span>
+                <span className="teach-price">
+                  {Number(course.price) > 0 ? `$${Number(course.price).toFixed(2)}` : 'Free'}
+                </span>
+              </div>
+
+              <div className="teach-actions">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setEditingCourse(course)}
+                >
+                  Edit details
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost teach-delete"
+                  onClick={() => handleDelete(course.id)}
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm teach-open"
+                  onClick={() => navigate(`/dashboard/instructor/courses/${course.id}`)}
+                >
+                  Open
+                  <FaArrowRight />
+                </button>
+              </div>
+            </article>
           ))}
         </div>
       )}

@@ -1,9 +1,10 @@
-import { useState,useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Button from '../Button/Button';
+﻿import { useContext, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext.jsx';
+import { useToast } from '../../contexts/ToastContext.jsx';
+import AuthShell from './AuthShell.jsx';
 import './AuthStyles.css';
-// import '../Courses/CourseForm.css';
 
 function parseJwt(token) {
   try {
@@ -13,18 +14,35 @@ function parseJwt(token) {
   }
 }
 
+const DEMO_ACCOUNTS = [
+  { label: 'Student', email: 'student@seatudy.local', password: 'Student@123' },
+  { label: 'Instructor', email: 'instructor@seatudy.local', password: 'Instructor@123' },
+  { label: 'Admin', email: 'admin@seatudy.local', password: 'Admin@123' },
+];
+
 function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useContext(AuthContext);
+  const { showToast } = useToast();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
   };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+
+  const fillDemo = (account) => {
+    setForm({ email: account.email, password: account.password });
+    setMessage('');
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setMessage('');
+    setSubmitting(true);
 
     try {
       const res = await fetch('http://localhost:5000/api/login', {
@@ -33,49 +51,101 @@ function Login() {
         body: JSON.stringify(form),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Login gagal');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Sign in failed');
 
       const token = data.token;
-      localStorage.setItem('token', token);
-
       const decoded = parseJwt(token);
 
-      if (!decoded || !decoded.role || !decoded.exp) {
-        throw new Error('Token tidak valid');
+      if (!decoded || !decoded.exp || decoded.exp < Date.now() / 1000) {
+        throw new Error('The session token is invalid. Please try again.');
       }
 
-      const now = Date.now() / 1000;
-      if (decoded.exp < now) {
-        localStorage.removeItem('token');
-        throw new Error('Token sudah expired');
-      }
-
-      if (res.ok) {
-        login(token);
-        navigate('/dashboard');
-      }
-
+      login(token);
+      showToast(`Welcome back, ${decoded.role}.`, 'success');
+      navigate(location.state?.from || '/dashboard', { replace: true });
     } catch (err) {
       setMessage(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-
-
   return (
-    <div className="auth-container">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="email" placeholder="Email" onChange={handleChange} required />
-        <input name="password" placeholder="Password" type="password" onChange={handleChange} required />
-        <Button type="submit">Login</Button>
+    <AuthShell>
+      <div className="auth-card-head">
+        <span className="eyebrow">Welcome back</span>
+        <h2>Sign in to Seatudy</h2>
+        <p>Pick up where you left off — your courses and tasks are waiting.</p>
+      </div>
+
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="field">
+          <label htmlFor="login-email">Email address</label>
+          <input
+            id="login-email"
+            className="input"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="login-password">Password</label>
+          <div className="password-wrap">
+            <input
+              id="login-password"
+              className="input"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((value) => !value)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+        </div>
+
+        {message && (
+          <p className="auth-error" role="alert">
+            {message}
+          </p>
+        )}
+
+        <button className="btn auth-submit" type="submit" disabled={submitting}>
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </button>
       </form>
-      {message && <p className="error-message">{message}</p>}
-      <p>
-        Belum punya akun? <Link to="/register">Daftar di sini</Link>
+
+      <div className="auth-demo">
+        <span>Try a demo account</span>
+        <div className="demo-chips">
+          {DEMO_ACCOUNTS.map((account) => (
+            <button key={account.label} type="button" onClick={() => fillDemo(account)}>
+              {account.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="auth-switch">
+        New to Seatudy? <Link to="/register">Create an account</Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }
 

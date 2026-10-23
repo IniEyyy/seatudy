@@ -1,118 +1,210 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+﻿import { useCallback, useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import {
+  FaArrowLeft,
+  FaClipboardList,
+  FaEdit,
+  FaFileAlt,
+  FaTrashAlt,
+} from 'react-icons/fa';
 import './instructorCourse.css';
 import AddMaterialForm from './AddMaterialForm';
+import { useToast } from '../../contexts/ToastContext';
 import AddAssignmentForm from './AddAssignmentForm';
 import EditAssignmentForm from './EditAssignmentForm.jsx';
 
+const API = 'http://localhost:5000';
+
 function ViewCourseDetail() {
   const { id } = useParams();
+  const { showToast } = useToast();
   const [course, setCourse] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [editingAssignment, setEditingAssignment] = useState(null);
 
   const token = localStorage.getItem('token');
 
-  const handleDeleteMaterial = async (materialId) => {
-    const confirm = window.confirm("Are you sure you want to delete this material?");
-    
-    if (!confirm) return;
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/instructor/courses/${id}/materials/${materialId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      alert('Material deleted');
-      fetchDetail();
-    } catch (err) {
-      alert('Delete failed: ' + err.message);
-    }
-  };
-
   const fetchDetail = useCallback(async () => {
+    setError('');
     try {
-      const res = await fetch(`http://localhost:5000/api/instructor/courses/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(`${API}/api/instructor/courses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not load this course');
 
       setCourse(data.course || data);
       setMaterials(data.materials || data.course?.materials || []);
       setAssignments(data.assignments || data.course?.assignments || []);
     } catch (err) {
-      console.error('Failed to fetch course detail:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   }, [id, token]);
 
-  const handleDeleteAssignment = async (assignmentId) => {
-    const confirm = window.confirm('Delete this assignment?');
-    if (!confirm) return;
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/instructor/assignments/${assignmentId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      alert('Assignment deleted!');
-      fetchDetail();
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  };
-
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
 
-  if (loading) return <p>Loading...</p>;
-  if (!course) return <p>Course not found.</p>;
+  const handleDeleteMaterial = async (materialId) => {
+    if (!window.confirm('Delete this material? Learners will lose access to the file.')) return;
+
+    try {
+      const res = await fetch(`${API}/api/instructor/courses/${id}/materials/${materialId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not delete material');
+      showToast('Material deleted.', 'success');
+      fetchDetail();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleDeleteAssignment = async (assignmentId) => {
+    if (!window.confirm('Delete this assignment? Submitted answers will be removed too.')) return;
+
+    try {
+      const res = await fetch(`${API}/api/instructor/assignments/${assignmentId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not delete assignment');
+      showToast('Assignment deleted.', 'success');
+      fetchDetail();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="page ic-page">
+        <div className="loading-block">
+          <span className="spinner" />
+          <span>Loading course…</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page ic-page">
+        <div className="ic-alert" role="alert">
+          <span>{error}</span>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={fetchDetail}>
+            Try again
+          </button>
+        </div>
+        <Link to="/dashboard/instructor/courses" className="btn btn-secondary">
+          <FaArrowLeft />
+          Back to courses
+        </Link>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="page ic-page">
+        <div className="empty-state">
+          <strong>Course not found.</strong>
+          <span>It may have been deleted or you do not have access to it.</span>
+          <Link to="/dashboard/instructor/courses" className="btn btn-sm btn-secondary">
+            Back to courses
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const price = Number(course.price) || 0;
 
   return (
-    <div className="course-detail-container">
-      <h2>{course.title}</h2>
-      <p>{course.description}</p>
-      <p>Category: {course.category}</p>
-      <p>Level: {course.level}</p>
-      <p>Price: ${course.price}</p>
+    <div className="page ic-page">
+      <Link to="/dashboard/instructor/courses" className="ic-back">
+        <FaArrowLeft />
+        Back to courses
+      </Link>
 
-      <section className="material-section">
-        <h3>Materials</h3>
+      <header className="ic-hero">
+        <div>
+          <div className="ic-tags">
+            <span className="catalog-tag">{course.category || 'General'}</span>
+            <span className="catalog-level">{course.level || 'All levels'}</span>
+            <span className={`ic-price ${price === 0 ? 'is-free' : ''}`}>
+              {price > 0 ? `$${price.toFixed(2)}` : 'Free'}
+            </span>
+          </div>
+          <h1>{course.title}</h1>
+          <p>{course.description}</p>
+        </div>
+
+        <div className="ic-hero-stats">
+          <div>
+            <strong>{materials.length}</strong>
+            <span>Materials</span>
+          </div>
+          <div>
+            <strong>{assignments.length}</strong>
+            <span>Assignments</span>
+          </div>
+          <div>
+            <strong>{course.student_count ?? 0}</strong>
+            <span>Learners</span>
+          </div>
+        </div>
+      </header>
+
+      <section className="ic-section">
+        <header className="ic-section-head">
+          <div>
+            <span className="eyebrow">Content</span>
+            <h2>Materials</h2>
+          </div>
+          <span className="ic-count">{materials.length} file{materials.length === 1 ? '' : 's'}</span>
+        </header>
+
         {materials.length === 0 ? (
-          <p className="no-material">No materials yet.</p>
+          <div className="empty-state">
+            <strong>No materials yet.</strong>
+            <span>Upload lecture notes, slides, or videos so learners have something to open.</span>
+          </div>
         ) : (
-          <ul className="material-list">
-            {materials.map(mat => (
-              <li key={mat.id} className="material-item">
-                <div className="material-info">
+          <ul className="ic-list">
+            {materials.map((mat) => (
+              <li key={mat.id} className="ic-item">
+                <span className="ic-item-icon">
+                  <FaFileAlt />
+                </span>
+                <div className="ic-item-body">
                   <a
-                    href={`http://localhost:5000${mat.link}`}
+                    href={`${API}${mat.link}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="material-title"
+                    className="ic-item-title"
                   >
                     {mat.title}
                   </a>
-                  {mat.content && <p className="material-desc">{mat.content}</p>}
+                  {mat.content && <p>{mat.content}</p>}
                 </div>
-                <button className="material-delete-btn" onClick={() => handleDeleteMaterial(mat.id, mat.link)}>🗑️</button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost ic-delete"
+                  onClick={() => handleDeleteMaterial(mat.id)}
+                  aria-label={`Delete ${mat.title}`}
+                >
+                  <FaTrashAlt />
+                  Delete
+                </button>
               </li>
             ))}
           </ul>
@@ -121,39 +213,78 @@ function ViewCourseDetail() {
         <AddMaterialForm courseId={id} onAdd={fetchDetail} />
       </section>
 
-      <section className="assignment-section">
-        <h3>Assignments</h3>
+      <section className="ic-section">
+        <header className="ic-section-head">
+          <div>
+            <span className="eyebrow">Assessment</span>
+            <h2>Assignments</h2>
+          </div>
+          <span className="ic-count">
+            {assignments.length} assignment{assignments.length === 1 ? '' : 's'}
+          </span>
+        </header>
 
         {assignments.length === 0 ? (
-          <p>No assignments yet.</p>
+          <div className="empty-state">
+            <strong>No assignments yet.</strong>
+            <span>Create one below, set a due date, then grade submissions as they come in.</span>
+          </div>
         ) : (
-          <ul className="assignment-list">
+          <ul className="ic-list">
             {assignments.map((asg) => (
-              <li key={asg.id} className="assignment-item">
-                <div className="assignment-info">
-                  <strong>{asg.title}</strong>
-                  <p>{asg.description}</p>
-                  <small>Due: {new Date(asg.due_date).toLocaleDateString()}</small>
+              <li key={asg.id} className="ic-item">
+                <span className="ic-item-icon is-amber">
+                  <FaClipboardList />
+                </span>
+                <div className="ic-item-body">
+                  <strong className="ic-item-title">{asg.title}</strong>
+                  {asg.description && <p>{asg.description}</p>}
+                  <span className="ic-item-meta">
+                    Due{' '}
+                    {new Date(asg.due_date).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </span>
                 </div>
-                <div className="assignment-actions">
-                  <button className="edit-btn" onClick={() => setEditingAssignment(asg)}>Edit</button>
-                  <button className="remove-btn" onClick={() => handleDeleteAssignment(asg.id)}>Delete</button>
-                  <Link to={`/dashboard/instructor/assignments/${asg.id}/submissions`}>
-                    <button className="view-submissions-btn">View Submissions</button>
+                <div className="ic-item-actions">
+                  <Link
+                    to={`/dashboard/instructor/assignments/${asg.id}/submissions`}
+                    className="btn btn-sm btn-secondary"
+                  >
+                    Submissions
                   </Link>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setEditingAssignment(asg)}
+                  >
+                    <FaEdit />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-ghost ic-delete"
+                    onClick={() => handleDeleteAssignment(asg.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               </li>
             ))}
           </ul>
         )}
+
         {editingAssignment ? (
           <EditAssignmentForm
             assignment={editingAssignment}
             onClose={() => setEditingAssignment(null)}
             onUpdate={fetchDetail}
-          />):(
-          <AddAssignmentForm courseId={id} onAdd={fetchDetail} />)
-        }
+          />
+        ) : (
+          <AddAssignmentForm courseId={id} onAdd={fetchDetail} />
+        )}
       </section>
     </div>
   );

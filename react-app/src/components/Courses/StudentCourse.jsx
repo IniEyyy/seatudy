@@ -1,15 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+﻿import React, { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  FaArrowLeft,
+  FaCheckCircle,
+  FaLock,
+  FaStar,
+  FaUserTie,
+  FaUsers,
+} from 'react-icons/fa';
 import './studentCourse.css';
 import ReviewList from './Review/ReviewList.jsx';
 import ReviewForm from './Review/ReviewForm.jsx';
 import ForumDiscussion from './Discussion/ForumDiscussion.jsx';
-import AssignmentSubmitForm from '../Assignment/AssignmentSubmitForm.jsx'
+import AssignmentSubmitForm from '../Assignment/AssignmentSubmitForm.jsx';
+import { useToast } from '../../contexts/ToastContext';
+
+const TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'materials', label: 'Materials' },
+  { id: 'assignments', label: 'Assignments' },
+  { id: 'review', label: 'Reviews' },
+  { id: 'forum', label: 'Forum' },
+];
 
 function StudentCourse() {
   const { id } = useParams();
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const { showToast } = useToast();
 
   const [user, setUser] = useState(null);
   const [course, setCourse] = useState(null);
@@ -18,95 +36,69 @@ function StudentCourse() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshReview, setRefreshReview] = useState(false);
-  const handleReviewRefresh = () => setRefreshReview(prev => !prev);
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const isTokenExpired = (token) => {
-    try {
-      const decoded = JSON.parse(atob(token.split('.')[1]));
-      return decoded.exp * 1000 < Date.now();
-    } catch {
-      return true;
-    }
-  };
+  const isStudent = user?.role === 'student';
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
-      if (token && isTokenExpired(token)) {
-        localStorage.removeItem('token');
-        navigate('/login');
-        return;
-      }
-
       try {
         if (token) {
           const profileRes = await fetch('http://localhost:5000/api/profile', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           });
 
           if (profileRes.ok) {
             const userData = await profileRes.json();
             setUser(userData);
-          }
-        }
 
-        let studentRes;
-        if (token) {
-          studentRes = await fetch(`http://localhost:5000/api/student/courses/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+            if (userData.role === 'student') {
+              const studentRes = await fetch(`http://localhost:5000/api/student/courses/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
 
-          if (studentRes.ok) {
-            const fullCourse = await studentRes.json();
-            setCourse(fullCourse);
-            setHasEnrolled(true);
-            setHasPurchased(true);
-            return;
+              if (studentRes.ok) {
+                setCourse(await studentRes.json());
+                setHasEnrolled(true);
+                setHasPurchased(true);
+                return;
+              }
+            }
           }
         }
 
         const publicRes = await fetch(`http://localhost:5000/api/public/courses/${id}`);
-        if (publicRes.ok) {
-          const publicCourse = await publicRes.json();
-          setCourse(publicCourse);
-        } else {
-          navigate('/login');
-          return;
-        }
+        if (!publicRes.ok) throw new Error('Course not found');
+        setCourse(await publicRes.json());
 
         if (token) {
           const purchaseRes = await fetch(`http://localhost:5000/api/student/purchases/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           });
           if (purchaseRes.ok) {
             const purchaseData = await purchaseRes.json();
-            setHasPurchased(purchaseData.purchased);
+            setHasPurchased(Boolean(purchaseData.purchased));
           }
         }
-
       } catch (err) {
-        console.error('Fetch course error:', err);
-        setError('Failed to load course');
+        setError(err.message || 'Failed to load course');
       }
     };
 
     fetchCourseDetail();
-  }, [id, navigate, token]);
+  }, [id, token]);
 
   const handleBuy = async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/student/buy/${id}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      alert(data.message);
-      window.location.reload();
-    } catch {
-      alert('Failed to purchase course');
+      if (!res.ok) throw new Error(data.message || 'Failed to purchase course');
+      setHasPurchased(true);
+      showToast(data.message || 'Course purchased.', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
     }
   };
 
@@ -114,168 +106,315 @@ function StudentCourse() {
     try {
       const res = await fetch(`http://localhost:5000/api/student/enroll/${id}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      alert(data.message);
-      window.location.reload();
-    } catch {
-      alert('Failed to enroll in course');
+      if (!res.ok) throw new Error(data.message || 'Failed to enroll in course');
+
+      const enrolledRes = await fetch(`http://localhost:5000/api/student/courses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (enrolledRes.ok) {
+        setCourse(await enrolledRes.json());
+        setHasEnrolled(true);
+        setHasPurchased(true);
+      }
+      showToast(data.message || 'You are enrolled.', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
     }
   };
 
-  if (error) return <p>{error}</p>;
-  if (!course) return <p>Loading course...</p>;
+  if (error) {
+    return (
+      <div className="page student-course-page">
+        <div className="courses-alert" role="alert">
+          <span>{error}</span>
+        </div>
+        <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
+          Go back
+        </button>
+      </div>
+    );
+  }
 
-  return (
-    <>
-      <h1>| Viewing as {user?.role ?? 'Guest'}</h1>
-      <div className="course-card">
-        <h2>{course.title}</h2>
-        <p>{course.description}</p>
-        <p><strong>Price:</strong> {Number(course.price) > 0 ? `$${course.price}` : 'Free'}</p>
-        {course.category && <p><strong>Category:</strong> {course.category}</p>}
-        {course.level && <p><strong>Level:</strong> {course.level}</p>}
-        <p><strong>Rating:</strong> {course.rating_avg ? `${Number(course.rating_avg).toFixed(1)}/5` : 'Not rated yet'}</p>
-        <p><strong>Students Enrolled:</strong> {course.student_count ?? 0}</p>
-        <p><strong>Instructor:</strong> {course.instructor_name ?? 'N/A'}</p>
+  if (!course) {
+    return (
+      <div className="page student-course-page">
+        <div className="loading-block">
+          <span className="spinner" />
+          <span>Loading course…</span>
+        </div>
+      </div>
+    );
+  }
 
-        {token && user?.role === 'student' && (
-          (!hasPurchased && (
-            <button onClick={handleBuy}>Buy Course</button>
-          )) || (hasPurchased && !hasEnrolled && (
-            <button onClick={handleEnroll}>Enroll</button>
-          ))
-        )}
+  const price = Number(course.price) || 0;
+  const rating = Number(course.rating_avg) || 0;
+  const courseLink = isStudent ? '/dashboard/student/courses' : '/dashboard/courses';
+  const locked = !(hasPurchased && hasEnrolled);
 
-        {(hasPurchased && hasEnrolled) && (
-          <div>
-            <div className="tab-buttons">
-              <button onClick={() => handleTabChange('overview')}>Overview</button>
-              <button onClick={() => handleTabChange('materials')}>Materials</button>
-              <button onClick={() => handleTabChange('assignments')}>Assignments</button>
-              <button onClick={() => handleTabChange('review')}>Review</button>
-              <button onClick={() => handleTabChange('forum')}>Forum</button>
+  const renderTabContent = () => {
+    if (activeTab === 'overview') {
+      return (
+        <div className="sc-panel">
+          <h2>About this course</h2>
+          <p className="sc-syllabus">{course.syllabus || course.description}</p>
+          <div className="sc-overview-grid">
+            <div>
+              <span>Materials</span>
+              <strong>{course.materials?.length ?? 0}</strong>
             </div>
-            <div className="tab-content" key={activeTab}>
-            {activeTab === 'overview' && (
-              <div className='course-detail'>
-                <h3>Syllabus</h3>
-                <p>{course.syllabus}</p>
-              </div>
-            )}
-
-            {activeTab === 'materials' && course.materials && (
-              <div className="course-detail">
-                <h3>Materials</h3>
-                <div className="material-list-student">
-                  {course.materials.map((m, i) => {
-                    const fileUrl = `http://localhost:5000${m.link}`;
-                    const ext = m.link?.split('.').pop().toLowerCase();
-                    const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
-                    const isVideo = ['mp4', 'mov', 'avi'].includes(ext);
-                    const isPDF = ext === 'pdf';
-                    const isDoc = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext);
-
-                    return (
-                      <div key={i} className="material-card">
-                        <div className="material-title">
-                          <strong>{m.title}</strong>
-                          <a
-                            href={fileUrl}
-                            download
-                            onClick={(e) => e.stopPropagation()}
-                            className="download-button"
-                          >
-                            ⬇️
-                          </a>
-                        </div>
-
-                        {m.content && <p className="material-description">{m.content}</p>}
-
-                        <div className="material-preview">
-                          {isVideo && (
-                            <video controls src={fileUrl} width="100%" />
-                          )}
-
-                          {isPDF && (
-                            <iframe
-                              src={fileUrl}
-                              title={m.title}
-                              width="100%"
-                              height="400"
-                              frameBorder="0"
-                            />
-                          )}
-
-                          {isImage && (
-                            <img src={fileUrl} alt={m.title} style={{ maxWidth: '100%', borderRadius: 4 }} />
-                          )}
-
-                          {isDoc && (
-                            <iframe
-                              src={`https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`}
-                              title={m.title}
-                              width="100%"
-                              height="450"
-                              frameBorder="0"
-                            />
-                          )}
-
-                          {!isVideo && !isPDF && !isImage && !isDoc && (
-                            <p><a href={fileUrl} target="_blank" rel="noreferrer">Open File</a></p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-
-            {activeTab === 'assignments' && course.assignments && (
-              <div className='course-detail'>
-                <h3>Assignments</h3>
-                <ul>
-                  {course.assignments.map((a, i) => (
-                    <li key={i}>
-                      <h4>{a.title}</h4>
-                      <p>{a.description}</p>
-                      <p><strong>Due:</strong> {new Date(a.due_date).toLocaleDateString()}</p>
-
-                      <AssignmentSubmitForm
-                        token={token}
-                        courseId={id}
-                        assignmentId={a.id}
-                        onSuccess={() => alert('Submitted!')}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {activeTab === 'review' && (
-              <div className="course-detail">
-                <h3>Write a Review</h3>
-                {/* <ReviewForm courseId={course.id} />
-                  <ReviewList courseId={course.id} /> */}
-                <ReviewForm courseId={course.id} onSuccess={handleReviewRefresh} />
-                <ReviewList courseId={course.id} refresh={refreshReview} />
-              </div>
-            )}
-
-            {activeTab === 'forum' && (
-              <div className="course-detail">
-                <ForumDiscussion courseId={course.id} />
-              </div>
-            )}
+            <div>
+              <span>Assignments</span>
+              <strong>{course.assignments?.length ?? 0}</strong>
+            </div>
+            <div>
+              <span>Level</span>
+              <strong>{course.level || 'All levels'}</strong>
             </div>
           </div>
-        )}
+        </div>
+      );
+    }
+
+    if (activeTab === 'materials') {
+      return (
+        <div className="sc-panel">
+          <h2>Course materials</h2>
+          {!course.materials?.length ? (
+            <div className="empty-state">
+              <strong>No materials uploaded yet.</strong>
+              <span>Your instructor will add files here as the course progresses.</span>
+            </div>
+          ) : (
+            <div className="sc-materials">
+              {course.materials.map((material, index) => {
+                const fileUrl = `http://localhost:5000${material.link}`;
+                const ext = material.link?.split('.').pop().toLowerCase();
+                const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
+                const isVideo = ['mp4', 'mov', 'avi'].includes(ext);
+                const isPDF = ext === 'pdf';
+                const isDoc = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext);
+
+                return (
+                  <article key={index} className="sc-material">
+                    <div className="sc-material-head">
+                      <div>
+                        <strong>{material.title}</strong>
+                        {material.content && <p>{material.content}</p>}
+                      </div>
+                      <a href={fileUrl} download className="btn btn-sm btn-secondary">
+                        Download
+                      </a>
+                    </div>
+
+                    {isVideo && <video controls src={fileUrl} />}
+                    {isPDF && <iframe src={fileUrl} title={material.title} frameBorder="0" />}
+                    {isImage && <img src={fileUrl} alt={material.title} />}
+                    {isDoc && (
+                      <iframe
+                        src={`https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+                        title={material.title}
+                        frameBorder="0"
+                      />
+                    )}
+                    {!isVideo && !isPDF && !isImage && !isDoc && (
+                      <a href={fileUrl} target="_blank" rel="noreferrer" className="sc-file-link">
+                        Open file
+                      </a>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (activeTab === 'assignments') {
+      return (
+        <div className="sc-panel">
+          <h2>Assignments</h2>
+          {!course.assignments?.length ? (
+            <div className="empty-state">
+              <strong>No assignments yet.</strong>
+              <span>New work will appear here when your instructor publishes it.</span>
+            </div>
+          ) : (
+            <div className="sc-assignments">
+              {course.assignments.map((assignment) => (
+                <article key={assignment.id} className="sc-assignment">
+                  <div className="sc-assignment-head">
+                    <div>
+                      <h3>{assignment.title}</h3>
+                      <p>{assignment.description}</p>
+                    </div>
+                    <span className="sc-due">
+                      Due{' '}
+                      {new Date(assignment.due_date).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <AssignmentSubmitForm
+                    token={token}
+                    courseId={id}
+                    assignmentId={assignment.id}
+                    onSuccess={() => showToast('Assignment submitted.', 'success')}
+                  />
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (activeTab === 'review') {
+      return (
+        <div className="sc-panel sc-two-col">
+          <div>
+            <h2>Write a review</h2>
+            <ReviewForm
+              courseId={course.id}
+              onSuccess={() => setRefreshReview((value) => !value)}
+            />
+          </div>
+          <div>
+            <h2>Learner reviews</h2>
+            <ReviewList courseId={course.id} refresh={refreshReview} />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="sc-panel">
+        <h2>Course forum</h2>
+        <ForumDiscussion courseId={course.id} />
       </div>
-    </>
+    );
+  };
+
+  return (
+    <div className="page student-course-page">
+      <Link to={courseLink} className="sc-back">
+        <FaArrowLeft />
+        Back to courses
+      </Link>
+
+      <section className="sc-hero">
+        <div className="sc-hero-copy">
+          <div className="sc-tags">
+            <span className="catalog-tag">{course.category || 'General'}</span>
+            <span className="catalog-level">{course.level || 'All levels'}</span>
+            {hasEnrolled && (
+              <span className="sc-enrolled">
+                <FaCheckCircle />
+                Enrolled
+              </span>
+            )}
+          </div>
+          <h1>{course.title}</h1>
+          <p>{course.description}</p>
+          <div className="sc-meta">
+            <span>
+              <FaStar />
+              {rating ? `${rating.toFixed(1)} rating` : 'New course'}
+            </span>
+            <span>
+              <FaUsers />
+              {course.student_count ?? 0} learners
+            </span>
+            <span>
+              <FaUserTie />
+              {course.instructor_name || 'Seatudy instructor'}
+            </span>
+          </div>
+        </div>
+
+        <aside className="sc-purchase">
+          <span className="sc-price">
+            {hasEnrolled ? 'Owned' : price > 0 ? `$${price.toFixed(2)}` : 'Free'}
+          </span>
+          <span className="sc-price-note">
+            {hasEnrolled
+              ? price > 0
+                ? `Purchased for $${price.toFixed(2)}`
+                : 'Free course, full access'
+              : price > 0
+                ? 'One-time purchase'
+                : 'No purchase required'}
+          </span>
+
+          {isStudent && !hasPurchased && (
+            <button type="button" className="btn sc-cta" onClick={handleBuy}>
+              Buy course
+            </button>
+          )}
+          {isStudent && hasPurchased && !hasEnrolled && (
+            <button type="button" className="btn sc-cta" onClick={handleEnroll}>
+              Enrol now
+            </button>
+          )}
+          {hasEnrolled && (
+            <span className="sc-access">
+              <FaCheckCircle />
+              Full access unlocked
+            </span>
+          )}
+          {!isStudent && user && (
+            <span className="sc-role-note">Browsing as {user.role}</span>
+          )}
+
+          <ul className="sc-includes">
+            <li>All course materials</li>
+            <li>Assignments and feedback</li>
+            <li>Reviews and discussion forum</li>
+          </ul>
+        </aside>
+      </section>
+
+      {locked ? (
+        <div className="sc-locked">
+          <FaLock />
+          <div>
+            <strong>{hasPurchased ? 'One more step to unlock the course.' : 'This course is not unlocked yet.'}</strong>
+            <span>
+              {hasPurchased
+                ? 'Enrol using the button above to open materials, assignments, reviews, and the forum.'
+                : price > 0
+                  ? 'Purchase the course to unlock its materials and assignments.'
+                  : 'Claim this free course to unlock its materials and assignments.'}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <section className="sc-content">
+          <div className="sc-tabs" role="tablist" aria-label="Course sections">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                className={activeTab === tab.id ? 'active' : ''}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="sc-tab-content" key={activeTab}>
+            {renderTabContent()}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 

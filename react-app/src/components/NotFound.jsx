@@ -1,16 +1,24 @@
-import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { ThemeContext } from '../contexts/ThemeContext';
+import { FaArrowLeft } from 'react-icons/fa';
 import './NotFound.css';
 
 function NotFound() {
-  const { theme } = useContext(ThemeContext);
-
   return (
-    <div className={`not-found ${theme}`}>
-      <h1>404</h1>
-      <p>Oops! The page you're looking for doesn't exist.</p>
-      <Link to="/" className="back-home">Go back to Home</Link>
+    <div className="page nf-page">
+      <div className="nf-card">
+        <span className="nf-code">404</span>
+        <h1>This page does not exist</h1>
+        <p>The link may be broken, or the page may have moved somewhere else.</p>
+        <div className="nf-actions">
+          <Link to="/dashboard" className="btn">
+            Go to dashboard
+          </Link>
+          <Link to="/dashboard/courses" className="btn btn-secondary">
+            <FaArrowLeft />
+            Browse courses
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

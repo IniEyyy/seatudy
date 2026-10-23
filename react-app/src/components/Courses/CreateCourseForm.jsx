@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+﻿import { useState } from 'react';
+import { FaTimes } from 'react-icons/fa';
+import { useToast } from '../../contexts/ToastContext';
 import './CourseForm.css';
 
-function CreateCourseForm({onClose, onUpdate}) {
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    syllabus: '',
-    category: '',
-    price: 0,
-    level: 'Beginner',
-  });
-  const [message, setMessage] = useState('');
+const EMPTY_FORM = {
+  title: '',
+  description: '',
+  syllabus: '',
+  category: '',
+  price: 0,
+  level: 'Beginner',
+};
+
+function CreateCourseForm({ onClose, onUpdate }) {
+  const { showToast } = useToast();
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,6 +25,7 @@ function CreateCourseForm({onClose, onUpdate}) {
     e.preventDefault();
     const token = localStorage.getItem('token');
 
+    setSaving(true);
     try {
       const res = await fetch('http://localhost:5000/api/instructor/courses', {
         method: 'POST',
@@ -30,59 +36,118 @@ function CreateCourseForm({onClose, onUpdate}) {
         body: JSON.stringify(form),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || 'Failed to create course');
-      setForm({ title: '', description: '', syllabus: '', category: '', price: 0, level: 'Beginner' })
 
-      alert('Course created!');
+      setForm(EMPTY_FORM);
+      showToast('Course created.', 'success');
       if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
-      setMessage(err.message);
+      showToast(err.message, 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button className="modal-close-btn" onClick={onClose}>✕</button>
-          <div className="form">
-            <h3>Create New Course</h3>
-            <form onSubmit={handleSubmit}>
+    <div className="cf-overlay">
+      <div className="cf-modal" role="dialog" aria-modal="true" aria-labelledby="cf-create-title">
+        <header className="cf-head">
+          <div>
+            <span className="eyebrow">New course</span>
+            <h2 id="cf-create-title">Create course</h2>
+          </div>
+          <button type="button" className="cf-close" onClick={onClose} aria-label="Close">
+            <FaTimes />
+          </button>
+        </header>
+
+        <form className="cf-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span>Title</span>
+            <input
+              className="input"
+              type="text"
+              name="title"
+              placeholder="e.g. React Fundamentals"
+              value={form.title}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label className="field">
+            <span>Description</span>
+            <textarea
+              className="input"
+              name="description"
+              placeholder="One paragraph on who this course is for and what they will build."
+              value={form.description}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label className="field">
+            <span>Syllabus</span>
+            <textarea
+              className="input"
+              name="syllabus"
+              placeholder="Topics covered, week by week."
+              value={form.syllabus}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <div className="cf-grid">
+            <label className="field">
+              <span>Price (USD)</span>
               <input
+                className="input"
+                type="number"
+                name="price"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                required
+              />
+            </label>
+
+            <label className="field">
+              <span>Category</span>
+              <input
+                className="input"
                 type="text"
-                name="title"
-                placeholder="Course Title"
-                value={form.title}
+                name="category"
+                placeholder="e.g. Programming"
+                value={form.category}
                 onChange={handleChange}
                 required
               />
-              <textarea
-                name="description"
-                placeholder="Course Description"
-                value={form.description}
-                onChange={handleChange}
-                required
-              ></textarea>
-              <textarea
-                name="syllabus"
-                placeholder="Syllabus"
-                value={form.syllabus}
-                onChange={handleChange}
-                required
-              ></textarea>
-              <input type="number" name="price" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} required />
-              <input type="text" name="category" placeholder='Category' onChange={handleChange} required />
-              <select name="level" value={form.level} onChange={handleChange}>
+            </label>
+
+            <label className="field">
+              <span>Level</span>
+              <select className="input" name="level" value={form.level} onChange={handleChange}>
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate">Intermediate</option>
                 <option value="Advanced">Advanced</option>
               </select>
-              <button type="submit">Create Course</button>
-              <button type="button" onClick={onClose}>Cancel</button>
-            </form>
-            {message && <p className="form-message">{message}</p>}
-        </div>
+            </label>
+          </div>
+
+          <div className="cf-actions">
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
+              Cancel
+            </button>
+            <button type="submit" className="btn" disabled={saving}>
+              {saving ? 'Creating…' : 'Create course'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

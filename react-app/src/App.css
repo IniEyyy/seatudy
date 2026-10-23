@@ -1,40 +1,41 @@
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
-  height: 100%;
-  background-color: #e0f2ff;
-  font-family: Arial, sans-serif;
+  min-height: 100%;
 }
 
 #root {
-  min-height: 100%;
-  background-color: #d4f1ff;
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
 }
 
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 10px;
+  background: #eef2f7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #004b8d, #64b5f6);
+  background: #c3cfdf;
+  border: 3px solid #eef2f7;
   border-radius: 10px;
-  border: 3px solid transparent;
-  background-clip: content-box;
-  transition: background-color 0.3s ease-in-out;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #002c5a, #42a5f5);
-}
-
-::-webkit-scrollbar-track-piece {
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+  background: #93a6bf;
 }
 
 .topup-form {
@@ -42,23 +43,24 @@ body, html {
   gap: 10px;
   align-items: center;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .topup-form input {
   padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
 }
 
 .topup-form button {
   padding: 8px 16px;
   border: none;
-  background-color: #0066ff;
+  background-color: var(--brand);
   color: white;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
 .topup-form button:hover {
-  background-color: #004bcc;
+  background-color: var(--brand-strong);
 }

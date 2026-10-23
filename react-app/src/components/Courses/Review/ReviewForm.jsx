@@ -1,60 +1,91 @@
-import React, { useState, useContext } from 'react';
+﻿import { useContext, useState } from 'react';
+import { FaStar } from 'react-icons/fa';
 import { AuthContext } from '../../../contexts/AuthContext';
+import { useToast } from '../../../contexts/ToastContext';
 import './reviewForm.css';
 
 function ReviewForm({ courseId, onSuccess }) {
   const [rating, setRating] = useState(5);
+  const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const { token } = useContext(AuthContext);
+  const { showToast } = useToast();
+
+  const activeRating = hovered || rating;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+
     try {
       const res = await fetch(`http://localhost:5000/api/reviews/${courseId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ rating, comment })
+        body: JSON.stringify({ rating, comment }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message || 'Review submitted!');
-        setRating(5);
-        setComment('');
-        if (onSuccess) onSuccess(); // Trigger refresh
-      } else {
-        alert(data.message || 'Failed to submit review');
-      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Failed to submit review');
+
+      showToast(data.message || 'Review submitted.', 'success');
+      setRating(5);
+      setComment('');
+      if (onSuccess) onSuccess();
     } catch (err) {
-      console.error('Review error:', err);
-      alert('Error submitting review');
+      showToast(err.message, 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="review-form">
-      <label>
-        Rating:
-        <select value={rating} onChange={e => setRating(Number(e.target.value))}>
-          {[5, 4, 3, 2, 1].map(r => (
-            <option key={r} value={r}>{r} Star</option>
+    <form onSubmit={handleSubmit} className="rv-form">
+      <div className="rv-rating">
+        <span className="rv-label">Your rating</span>
+        <div
+          className="rv-stars"
+          role="radiogroup"
+          aria-label="Rating"
+          onMouseLeave={() => setHovered(0)}
+        >
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={rating === value}
+              aria-label={`${value} star${value === 1 ? '' : 's'}`}
+              className={value <= activeRating ? 'is-active' : ''}
+              onMouseEnter={() => setHovered(value)}
+              onFocus={() => setHovered(value)}
+              onBlur={() => setHovered(0)}
+              onClick={() => setRating(value)}
+            >
+              <FaStar />
+            </button>
           ))}
-        </select>
-      </label>
+          <span className="rv-rating-value">{rating}.0</span>
+        </div>
+      </div>
 
-      <label>
-        Comment:
+      <label className="field">
+        <span>Comment</span>
         <textarea
+          className="input"
+          placeholder="What worked for you? What could be better?"
           value={comment}
-          onChange={e => setComment(e.target.value)}
+          onChange={(e) => setComment(e.target.value)}
           required
         />
       </label>
 
-      <button type="submit">Submit Review</button>
+      <button type="submit" className="btn" disabled={submitting}>
+        {submitting ? 'Submitting…' : 'Submit review'}
+      </button>
     </form>
   );
 }

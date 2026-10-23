@@ -1,0 +1,230 @@
+﻿.topup-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.topup-header h1 {
+  margin: 0.55rem 0 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.topup-header p {
+  max-width: 640px;
+  margin: 0.5rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.topup-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.topup-card,
+.wallet-card {
+  padding: 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.topup-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.topup-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: #b45309;
+  flex: none;
+}
+
+.topup-card-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topup-card-head p {
+  margin: 0.15rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.quick-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.quick-amounts button {
+  min-height: 34px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.quick-amounts button:hover {
+  border-color: var(--brand);
+  background: var(--brand-50);
+  color: var(--brand-strong);
+}
+
+.topup-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+
+.topup-form > label {
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.topup-input-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.topup-input-wrap:focus-within {
+  border-color: var(--brand);
+  box-shadow: var(--ring);
+}
+
+.topup-input-wrap span {
+  color: var(--ink-faint);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.topup-input-wrap input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  outline: none;
+  padding: 0 0 0 0.35rem;
+}
+
+.topup-input-wrap input::placeholder {
+  color: var(--ink-faint);
+}
+
+.topup-submit {
+  width: 100%;
+  margin-top: 0.45rem;
+}
+
+.wallet-card {
+  background: var(--brand-deep);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.wallet-label {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wallet-card > strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.wallet-note {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+.wallet-note svg {
+  margin-top: 0.2rem;
+  color: #93c5fd;
+  flex: none;
+}
+
+.wallet-note p {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.wallet-card ul {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.wallet-card li {
+  position: relative;
+  padding-left: 1rem;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+}
+
+.wallet-card li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+@media (max-width: 820px) {
+  .topup-grid {
+    grid-template-columns: 1fr;
+  }
+}

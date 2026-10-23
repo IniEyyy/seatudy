@@ -1,79 +1,198 @@
-.submissions-overview {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 2rem;
+.submissions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.submissions-overview h2 {
-  margin-bottom: 0.5rem;
-  color: #222;
+.submissions-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
 }
 
-.submissions-subtitle {
-  margin-bottom: 1.5rem;
-  color: #666;
+.submissions-header h1 {
+  margin: 0.55rem 0 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }
 
-.submissions-message {
-  padding: 2rem;
-  color: #666;
+.submissions-header p {
+  max-width: 620px;
+  margin: 0.5rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.submissions-summary {
+  display: flex;
+  flex: none;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.submissions-summary div {
+  min-width: 76px;
+  padding: 0.5rem 0.55rem;
+  text-align: center;
+}
+
+.submissions-summary div + div {
+  border-left: 1px solid var(--line);
+}
+
+.submissions-summary strong,
+.submissions-summary span {
+  display: block;
+}
+
+.submissions-summary strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.submissions-summary strong.warn {
+  color: #b45309;
+}
+
+.submissions-summary span {
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.submissions-loading {
+  display: grid;
+  place-items: center;
+  gap: 0.6rem;
+  min-height: 240px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
 }
 
 .submissions-table-wrapper {
   overflow-x: auto;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .submissions-table {
   width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
-  min-width: 720px;
 }
 
 .submissions-table th,
 .submissions-table td {
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
   text-align: left;
-  font-size: 0.9rem;
-  border-bottom: 1px solid #eee;
+  font-size: 0.82rem;
+  vertical-align: middle;
 }
 
 .submissions-table th {
-  background: #f8fafc;
-  color: #444;
-  font-weight: 600;
+  background: var(--surface-muted);
+  color: var(--ink-faint);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 .submissions-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.submissions-missing {
-  display: block;
-  margin-top: 2px;
-  font-size: 0.78rem;
-  color: #b45309;
+.submissions-table tbody tr:hover {
+  background: #fbfdff;
 }
 
-.submissions-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 88px;
-  height: 34px;
-  padding: 0 14px;
-  background: #007bff;
-  color: #fff;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
+.row-course {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--ink-faint);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.row-assignment {
+  display: block;
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+
+.row-date {
+  color: var(--ink-soft);
   white-space: nowrap;
 }
 
-.submissions-link:hover {
-  background: #0056b3;
-  text-decoration: none;
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 160px;
+}
+
+.progress-track {
+  position: relative;
+  width: 78px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--line);
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+}
+
+.progress-label {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.progress-label em {
+  margin-left: 0.3rem;
+  color: #b45309;
+  font-size: 0.64rem;
+  font-style: normal;
+}
+
+.submissions-link {
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .submissions-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .submissions-summary {
+    width: 100%;
+  }
+
+  .submissions-summary div {
+    flex: 1;
+    min-width: 0;
+  }
 }

@@ -1,33 +1,71 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { FaStar, FaUsers } from 'react-icons/fa';
 import './studentCourses.css';
 
-function CourseCard({ course, userRole, hasPurchased, hasEnrolled, onBuy, onEnroll }) {
-  const navigate = useNavigate();
+function CourseCard({ course, status, detailPath, onBuy, onEnroll, busy }) {
+  const isFree = Number(course.price) <= 0;
+  const rating = Number(course.rating_avg) || 0;
 
   return (
-    <div key={course.id} className="course-card available">
+    <article className={`catalog-card catalog-card-${status}`}>
+      <div className="catalog-card-top">
+        <span className="catalog-tag">{course.category || 'General'}</span>
+        {course.level && <span className="catalog-level">{course.level}</span>}
+      </div>
+
       <h3>{course.title}</h3>
-      <p><strong>Description: </strong> {course.description}</p>
-      <p><strong>Rating:</strong> {course.rating_avg ? `${Number(course.rating_avg).toFixed(1)}/5` : 'Not rated yet'}</p>
-      {!hasPurchased && <p><strong>Price:</strong> ${course.price ?? 0}</p>}
+      <p className="catalog-description">{course.description}</p>
 
-      <p><strong>Enrolled:</strong> {course.student_count ?? 0}</p>
+      <div className="catalog-meta">
+        <span title="Average rating">
+          <FaStar />
+          {rating ? rating.toFixed(1) : 'New'}
+        </span>
+        <span title="Students enrolled">
+          <FaUsers />
+          {course.student_count ?? 0}
+        </span>
+        <span className={`catalog-price${isFree ? ' free' : ''}`}>
+          {isFree ? 'Free' : `$${Number(course.price).toFixed(2)}`}
+        </span>
+      </div>
 
-      <button onClick={() => navigate(`/dashboard/student/courses/${course.id}`)}>View Course Detail</button>
+      <div className="catalog-actions">
+        <Link to={detailPath} className="catalog-link">
+          View course
+        </Link>
 
-      {userRole === 'student' && !hasPurchased && (
-        <button onClick={() => onBuy(course.id)}>Buy Course</button>
-      )}
-      {userRole=='' && (
-        <button onClick={() => navigate('/login')}>Buy Course</button>
-      )}
-      {userRole === 'student' && hasPurchased && !hasEnrolled && (
-        <button onClick={() => onEnroll(course.id)}>Enroll</button>
-      )}
-    </div>
+        {status === 'available' && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => onBuy(course.id)}
+            disabled={busy}
+          >
+            {busy ? 'Purchasing…' : isFree ? 'Get course' : 'Buy course'}
+          </button>
+        )}
+
+        {status === 'bought' && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => onEnroll(course.id)}
+            disabled={busy}
+          >
+            {busy ? 'Enrolling…' : 'Enroll now'}
+          </button>
+        )}
+
+        {status === 'enrolled' && (
+          <span className="catalog-status">
+            <span className="status-dot" />
+            Enrolled
+          </span>
+        )}
+      </div>
+    </article>
   );
 }
 
 export default CourseCard;
-
-
