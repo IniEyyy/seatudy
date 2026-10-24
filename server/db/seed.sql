@@ -181,6 +181,8 @@ WHERE NOT EXISTS (
 INSERT INTO assignments (course_id, title, description, due_date)
 SELECT c.id, v.title, v.description, NOW() + (v.due_offset || ' days')::interval
 FROM (VALUES
+  ('Belajar React dari Nol', 'Tugas 1', 'Buat komponen React', 5),
+  ('Belajar React dari Nol', 'Tugas File', 'Upload file', 3),
   ('TypeScript untuk Aplikasi Nyata', 'Refactor ke TypeScript', 'Refactor satu komponen React menjadi TypeScript dan jelaskan tipe yang dipakai.', -5),
   ('TypeScript untuk Aplikasi Nyata', 'Tipe Generik untuk API', 'Buat helper fetch dengan generic dan tipe response yang aman.', 9),
   ('Desain UI untuk Developer', 'Audit UI Aplikasi', 'Pilih satu halaman aplikasi dan tulis temuan hierarchy, spacing, serta tipografi.', -4),

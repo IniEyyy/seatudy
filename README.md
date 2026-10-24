@@ -139,7 +139,7 @@ Seed juga membuat akun tambahan untuk mengisi data demo:
 - Instructor: `rina@seatudy.local`, `bagas@seatudy.local`, `maya@seatudy.local` — password `Instructor@123`.
 - Student: `alya@seatudy.local`, `bima@seatudy.local`, `citra@seatudy.local`, `dimas@seatudy.local`, `eka@seatudy.local`, `fajar@seatudy.local`, `gita@seatudy.local`, `hendra@seatudy.local`, `intan@seatudy.local`, `joko@seatudy.local`, `kirana@seatudy.local`, `lukman@seatudy.local` — password `Student@123`.
 
-Total data demo: 18 akun, 9 course, 18 materi, 16 assignment, 26 enrollment, 25 pembelian, 20 submission, 22 review, 16 pesan forum, dan 18 notifikasi. Seed bersifat idempotent, jadi aman dijalankan ulang. File materi demo disalin dari `db/demo-assets/` ke `uploads/` saat seed dijalankan, sehingga preview file tetap bekerja pada clone baru.
+Total data demo: 18 akun, 9 course, 18 materi, 18 assignment, 26 enrollment, 25 pembelian, 25 submission, 22 review, 16 pesan forum, dan 18 notifikasi. Seed bersifat idempotent, jadi aman dijalankan ulang. File materi demo disalin dari `db/demo-assets/` ke `uploads/` saat seed dijalankan, sehingga preview file tetap bekerja pada clone baru.
 
 ---
 
