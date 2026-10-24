@@ -1,4 +1,4 @@
-﻿.student-course-page {
+.student-course-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -399,18 +399,21 @@
   color: var(--ink-soft);
   font-size: 0.8rem;
 }
-.sc-assignment .assignment-form {
+
+.sc-assignment .assignment-form {
   margin: 0;
   padding: 0;
   border: none;
   background: transparent;
 }
-.sc-assignment .assignment-form textarea {
+
+.sc-assignment .assignment-form textarea {
   border-color: var(--line-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
-.sc-assignment .drag-drop-area {
+
+.sc-assignment .drag-drop-area {
   border-color: var(--line-strong);
   background: var(--surface);
   border-radius: var(--radius-sm);
@@ -483,4 +486,58 @@
   .sc-material iframe {
     height: 260px;
   }
+}
+
+.sc-progress {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.sc-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.sc-progress-head span {
+  color: var(--brand-ink);
+  font-weight: 800;
+}
+
+.sc-progress-bar {
+  height: 8px;
+  margin-top: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.sc-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+  transition: width 0.3s ease;
+}
+
+.sc-progress p {
+  margin: 0.5rem 0 0;
+  color: var(--ink-faint);
+  font-size: 0.76rem;
+}
+
+.sc-progress .btn {
+  margin-top: 0.65rem;
+}
+
+.sc-file-error {
+  margin: 0.6rem 0 0;
+  color: var(--danger-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
 }

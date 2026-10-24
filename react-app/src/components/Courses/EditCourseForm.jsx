@@ -2,6 +2,8 @@
 import { FaTimes } from 'react-icons/fa';
 import { useToast } from '../../contexts/ToastContext';
 import './CourseForm.css';
+import { apiFetch } from '../../lib/api';
+
 
 function EditCourseForm({ course, onClose, onUpdate }) {
   const { showToast } = useToast();
@@ -25,7 +27,7 @@ function EditCourseForm({ course, onClose, onUpdate }) {
 
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/instructor/courses/${course.id}`, {
+      const res = await apiFetch(`/api/instructor/courses/${course.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

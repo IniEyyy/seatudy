@@ -5,10 +5,14 @@ import './instructorCourses.css';
 import EditCourseForm from './EditCourseForm';
 import CreateCourseForm from './CreateCourseForm';
 import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
+import { apiFetch } from '../../lib/api';
+
 
 function InstructorCourses() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,7 +25,7 @@ function InstructorCourses() {
     if (showSkeleton) setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/instructor/courses', {
+      const res = await apiFetch('/api/instructor/courses', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch courses');
@@ -40,10 +44,16 @@ function InstructorCourses() {
 
   const handleDelete = async (courseId) => {
     const token = localStorage.getItem('token');
-    if (!window.confirm('Delete this course and all of its content?')) return;
+    const approved = await confirm({
+      title: 'Delete this course?',
+      message: 'The course, its materials, assignments, and submissions will be removed.',
+      confirmLabel: 'Delete course',
+      tone: 'danger',
+    });
+    if (!approved) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/instructor/courses/${courseId}`, {
+      const res = await apiFetch(`/api/instructor/courses/${courseId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

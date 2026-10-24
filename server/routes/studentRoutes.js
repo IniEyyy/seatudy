@@ -22,7 +22,8 @@ router.post('/topup', studentController.topUpBalance);
 
 router.post(
   '/courses/:courseId/assignments/:assignmentId/submit',
-  upload.array('files'),
+  isEnrolled,
+  upload.array('files', 8),
   studentController.submitAssignment
 );
 

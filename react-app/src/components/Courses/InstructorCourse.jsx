@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   FaArrowLeft,
@@ -10,14 +10,17 @@ import {
 import './instructorCourse.css';
 import AddMaterialForm from './AddMaterialForm';
 import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import AddAssignmentForm from './AddAssignmentForm';
 import EditAssignmentForm from './EditAssignmentForm.jsx';
+import ForumDiscussion from './Discussion/ForumDiscussion.jsx';
+import { apiFetch, downloadFile } from '../../lib/api';
 
-const API = 'http://localhost:5000';
 
 function ViewCourseDetail() {
   const { id } = useParams();
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [course, setCourse] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -30,7 +33,7 @@ function ViewCourseDetail() {
   const fetchDetail = useCallback(async () => {
     setError('');
     try {
-      const res = await fetch(`${API}/api/instructor/courses/${id}`, {
+      const res = await apiFetch(`/api/instructor/courses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
@@ -50,11 +53,26 @@ function ViewCourseDetail() {
     fetchDetail();
   }, [fetchDetail]);
 
+  const handleOpenMaterial = async (material) => {
+    try {
+      const ext = material.link?.split('.').pop() || '';
+      await downloadFile(`/api/files/materials/${material.id}`, `${material.title}.${ext}`);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
   const handleDeleteMaterial = async (materialId) => {
-    if (!window.confirm('Delete this material? Learners will lose access to the file.')) return;
+    const approved = await confirm({
+      title: 'Delete material?',
+      message: 'Learners will lose access to this file.',
+      confirmLabel: 'Delete material',
+      tone: 'danger',
+    });
+    if (!approved) return;
 
     try {
-      const res = await fetch(`${API}/api/instructor/courses/${id}/materials/${materialId}`, {
+      const res = await apiFetch(`/api/instructor/courses/${id}/materials/${materialId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -68,10 +86,16 @@ function ViewCourseDetail() {
   };
 
   const handleDeleteAssignment = async (assignmentId) => {
-    if (!window.confirm('Delete this assignment? Submitted answers will be removed too.')) return;
+    const approved = await confirm({
+      title: 'Delete assignment?',
+      message: 'Submitted answers and grades will be removed too.',
+      confirmLabel: 'Delete assignment',
+      tone: 'danger',
+    });
+    if (!approved) return;
 
     try {
-      const res = await fetch(`${API}/api/instructor/assignments/${assignmentId}`, {
+      const res = await apiFetch(`/api/instructor/assignments/${assignmentId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -89,7 +113,7 @@ function ViewCourseDetail() {
       <div className="page ic-page">
         <div className="loading-block">
           <span className="spinner" />
-          <span>Loading course…</span>
+          <span>Loading course...</span>
         </div>
       </div>
     );
@@ -186,14 +210,13 @@ function ViewCourseDetail() {
                   <FaFileAlt />
                 </span>
                 <div className="ic-item-body">
-                  <a
-                    href={`${API}${mat.link}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ic-item-title"
+                  <button
+                    type="button"
+                    className="ic-item-title ic-item-link"
+                    onClick={() => handleOpenMaterial(mat)}
                   >
                     {mat.title}
-                  </a>
+                  </button>
                   {mat.content && <p>{mat.content}</p>}
                 </div>
                 <button
@@ -285,6 +308,17 @@ function ViewCourseDetail() {
         ) : (
           <AddAssignmentForm courseId={id} onAdd={fetchDetail} />
         )}
+      </section>
+
+      <section className="ic-section">
+        <header className="ic-section-head">
+          <div>
+            <span className="eyebrow">Community</span>
+            <h2>Course discussion</h2>
+          </div>
+          <span className="ic-count">Moderate learner questions</span>
+        </header>
+        <ForumDiscussion courseId={course.id} />
       </section>
     </div>
   );

@@ -2,6 +2,8 @@
 import { FaTimes } from 'react-icons/fa';
 import { useToast } from '../../contexts/ToastContext';
 import './CourseForm.css';
+import { apiFetch } from '../../lib/api';
+
 
 const EMPTY_FORM = {
   title: '',
@@ -27,7 +29,7 @@ function CreateCourseForm({ onClose, onUpdate }) {
 
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:5000/api/instructor/courses', {
+      const res = await apiFetch('/api/instructor/courses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,11 +1,12 @@
-﻿import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { FaSearch, FaSlidersH } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import CourseCard from './CourseCard.jsx';
 import './studentCourses.css';
+import { apiFetch } from '../../lib/api';
 
-const API = 'http://localhost:5000';
+
 
 function StudentCourses() {
   const { user, token, setUser } = useContext(AuthContext);
@@ -33,13 +34,13 @@ function StudentCourses() {
 
       try {
         if (!isStudent) {
-          const res = await fetch(`${API}/api/public/courses`);
+          const res = await apiFetch(`/api/public/courses`);
           if (!res.ok) throw new Error('Could not load the course catalogue');
           setAvailableCourses(await res.json());
           return;
         }
 
-        const res = await fetch(`${API}/api/student/courses`, {
+        const res = await apiFetch(`/api/student/courses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json().catch(() => ({}));
@@ -61,7 +62,7 @@ function StudentCourses() {
   }, [loadData]);
 
   const refreshProfile = async () => {
-    const res = await fetch(`${API}/api/profile`, {
+    const res = await apiFetch(`/api/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -73,7 +74,7 @@ function StudentCourses() {
   const handleBuy = async (courseId) => {
     setBusyId(courseId);
     try {
-      const res = await fetch(`${API}/api/student/buy/${courseId}`, {
+      const res = await apiFetch(`/api/student/buy/${courseId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -91,7 +92,7 @@ function StudentCourses() {
   const handleEnroll = async (courseId) => {
     setBusyId(courseId);
     try {
-      const res = await fetch(`${API}/api/student/enroll/${courseId}`, {
+      const res = await apiFetch(`/api/student/enroll/${courseId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

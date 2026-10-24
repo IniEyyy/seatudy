@@ -1,7 +1,8 @@
-﻿import { useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext.jsx';
+import { apiFetch } from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext.jsx';
 import AuthShell from './AuthShell.jsx';
 import './AuthStyles.css';
@@ -45,7 +46,7 @@ function Login() {
     setSubmitting(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/login', {
+      const res = await apiFetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -62,7 +63,7 @@ function Login() {
       }
 
       login(token);
-      showToast(`Welcome back, ${decoded.role}.`, 'success');
+      showToast(`Welcome back, ${data.user?.role || decoded.role}.`, 'success');
       navigate(location.state?.from || '/dashboard', { replace: true });
     } catch (err) {
       setMessage(err.message);
@@ -76,7 +77,7 @@ function Login() {
       <div className="auth-card-head">
         <span className="eyebrow">Welcome back</span>
         <h2>Sign in to Seatudy</h2>
-        <p>Pick up where you left off — your courses and tasks are waiting.</p>
+        <p>Pick up where you left off - your courses and tasks are waiting.</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -127,7 +128,7 @@ function Login() {
         )}
 
         <button className="btn auth-submit" type="submit" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
 

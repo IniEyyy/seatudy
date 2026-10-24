@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowRight } from 'react-icons/fa';
 import './instructorSubmissionsOverview.css';
+import { apiFetch } from '../../lib/api';
+
 
 function InstructorSubmissionsOverview() {
   const token = localStorage.getItem('token');
@@ -12,7 +14,7 @@ function InstructorSubmissionsOverview() {
   useEffect(() => {
     if (!token) return;
 
-    fetch('http://localhost:5000/api/instructor/submissions/overview', {
+    apiFetch('/api/instructor/submissions/overview', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

@@ -10,7 +10,7 @@ export default function ProtectedRoute({ roles, children }) {
     return (
       <div className="loading-block">
         <span className="spinner" />
-        <span>Checking your session…</span>
+        <span>Checking your session...</span>
       </div>
     );
   }

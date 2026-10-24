@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { FaStar } from 'react-icons/fa';
 import './reviewList.css';
+import { apiFetch } from '../../../lib/api';
 
-const API = 'http://localhost:5000';
+
 
 const initials = (name = '?') =>
   name
@@ -24,7 +25,7 @@ function ReviewList({ courseId, refresh }) {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`${API}/api/reviews/${courseId}`);
+        const res = await apiFetch(`/api/reviews/${courseId}`);
         const data = await res.json().catch(() => []);
         if (!res.ok) throw new Error(data.message || 'Could not load reviews');
         if (active) setReviews(Array.isArray(data) ? data : []);

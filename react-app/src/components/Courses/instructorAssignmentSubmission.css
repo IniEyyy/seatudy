@@ -301,3 +301,61 @@
     grid-template-columns: 1fr;
   }
 }
+
+.isub-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.isub-bulk strong {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.isub-bulk .input {
+  width: auto;
+  min-width: 120px;
+}
+
+.isub-bulk .input:not(.isub-score) {
+  flex: 1;
+  min-width: 180px;
+}
+
+.isub-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.isub-files button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand-ink);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.isub-feedback {
+  min-width: 160px;
+  min-height: 58px;
+  font-size: 0.76rem;
+  resize: vertical;
+}

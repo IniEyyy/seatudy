@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const forumController = require('../controllers/forumController');
-const { authenticate, isStudent, isEnrolled } = require('../middlewares/authMiddleware');
+const { authenticate } = require('../middlewares/authMiddleware');
 
-// Protected Student Routes
-router.use(authenticate, isStudent);
+router.use(authenticate);
 
-router.get('/:courseId', isEnrolled, forumController.getForumMessages);
-router.post('/:courseId', isEnrolled, forumController.postForumMessage);
+router.get('/:courseId', forumController.getForumMessages);
+router.post('/:courseId', forumController.postForumMessage);
+router.put('/:courseId/:messageId', forumController.editForumMessage);
+router.delete('/:courseId/:messageId', forumController.deleteForumMessage);
 
 module.exports = router;

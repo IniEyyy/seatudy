@@ -2,6 +2,8 @@
 import { FaCloudUploadAlt, FaFileAlt, FaTimes } from 'react-icons/fa';
 import { useToast } from '../../contexts/ToastContext';
 import './addMaterialForm.css';
+import { apiFetch } from '../../lib/api';
+
 
 function AddMaterialForm({ courseId, onAdd }) {
   const { showToast } = useToast();
@@ -47,7 +49,7 @@ function AddMaterialForm({ courseId, onAdd }) {
 
     setUploading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/instructor/courses/${courseId}/materials`, {
+      const res = await apiFetch(`/api/instructor/courses/${courseId}/materials`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

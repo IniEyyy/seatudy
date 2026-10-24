@@ -1,11 +1,12 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const http = require('http');
+const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
-const path = require('path');
 
 // Import routes
 const publicRoutes = require('./routes/publicRoutes');
@@ -18,6 +19,7 @@ const instructorRoutes = require('./routes/instructorRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 const pool = require('./db');
 
 const app = express();
@@ -51,6 +53,7 @@ app.use(cors({
 // Middleware JSON parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Create HTTP server & bind socket.io
 const server = http.createServer(app);
@@ -66,26 +69,28 @@ const io = new Server(server, {
 // Store connected users { userId: socketId }
 let onlineUsers = {};
 
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Unauthorized'));
+
+  try {
+    socket.user = jwt.verify(token, process.env.JWT_SECRET);
+    return next();
+  } catch {
+    return next(new Error('Unauthorized'));
+  }
+});
+
 // Socket.IO connection handler
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
+  const userId = socket.user.id;
+  onlineUsers[userId] = socket.id;
+  console.log('User ' + userId + ' connected with socket ' + socket.id);
 
-  // Register user by ID
-  socket.on('register', (userId) => {
-    if (userId) {
-      onlineUsers[userId] = socket.id;
-      console.log('User ' + userId + ' registered with socket ' + socket.id);
-    }
-  });
-
-  // Handle disconnect
   socket.on('disconnect', () => {
-    for (let id in onlineUsers) {
-      if (onlineUsers[id] === socket.id) {
-        delete onlineUsers[id];
-        console.log('User ' + id + ' disconnected (' + socket.id + ')');
-        break;
-      }
+    if (onlineUsers[userId] === socket.id) {
+      delete onlineUsers[userId];
+      console.log('User ' + userId + ' disconnected (' + socket.id + ')');
     }
   });
 });
@@ -101,16 +106,14 @@ app.use('/api/register', authLimiter);
 app.use('/api', authRoutes);
 app.use('/api', adminRoutes);
 app.use('/api/public', publicRoutes);
-app.use('/api/student', studentRoutes);
 app.use('/api/student/forum', forumRoutes);
+app.use('/api/student', studentRoutes);
 app.use('/api/student/assignments', assignmentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-
-// Serve static uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/files', fileRoutes);
 
 // Health check route
 app.get('/', (req, res) => {
@@ -134,8 +137,9 @@ app.use((req, res) => {
 // Central error handler (multer, JSON parse, etc.)
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err.message);
-  const status = err.status || (err.name === "MulterError" ? 400 : 500);
-  res.status(status).json({ message: err.message || "Server error" });
+  const status = err.status || err.statusCode || (err.name === "MulterError" ? 400 : 500);
+  const message = status >= 500 ? "Server error" : err.message || "Request failed";
+  res.status(status).json({ message });
 });
 
 // Start server

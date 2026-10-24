@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const uploadDir = path.join(__dirname, '..', 'uploads', 'materials');
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -10,9 +11,8 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
-    cb(null, uniqueName);
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, crypto.randomUUID() + ext);
   }
 });
 
@@ -26,10 +26,17 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Unsupported file type'), false);
+    const error = new Error('Unsupported file type');
+    error.status = 400;
+    error.statusCode = 400;
+    cb(error, false);
   }
 };
 
-const upload = multer({ storage, fileFilter });
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 50 * 1024 * 1024, files: 6 },
+});
 
 module.exports = upload;

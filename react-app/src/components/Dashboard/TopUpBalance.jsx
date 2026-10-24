@@ -3,6 +3,8 @@ import { FaCoins, FaWallet } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import './topUpBalance.css';
+import { apiFetch } from '../../lib/api';
+
 
 const QUICK_AMOUNTS = [10, 25, 50, 100];
 
@@ -27,7 +29,7 @@ function TopUpBalance() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/student/topup', {
+      const res = await apiFetch('/api/student/topup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

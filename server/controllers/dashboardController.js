@@ -3,7 +3,7 @@ const pool = require('../db');
 const asNumber = (value) => Number(value) || 0;
 
 async function getStudentDashboard(userId) {
-  const [enrollments, assignments, scores, upcoming, profile] = await Promise.all([
+  const [enrollments, assignments, scores, upcoming, profile, latestCourse] = await Promise.all([
     pool.query('SELECT COUNT(*)::int AS count FROM enrollments WHERE student_id = $1', [userId]),
     pool.query(
       `SELECT COUNT(*)::int AS pending
@@ -35,6 +35,15 @@ async function getStudentDashboard(userId) {
       [userId]
     ),
     pool.query('SELECT balance FROM users WHERE id = $1', [userId]),
+    pool.query(
+      `SELECT c.id, c.title
+       FROM enrollments e
+       JOIN courses c ON c.id = e.course_id
+       WHERE e.student_id = $1
+       ORDER BY e.enrolled_at DESC
+       LIMIT 1`,
+      [userId]
+    ),
   ]);
 
   return {
@@ -56,6 +65,13 @@ async function getStudentDashboard(userId) {
       })}`,
       href: `/dashboard/student/courses/${row.course_id}`,
     })),
+    continueCourse: latestCourse.rows[0]
+      ? {
+          id: latestCourse.rows[0].id,
+          title: latestCourse.rows[0].title,
+          href: `/dashboard/student/courses/${latestCourse.rows[0].id}`,
+        }
+      : null,
   };
 }
 

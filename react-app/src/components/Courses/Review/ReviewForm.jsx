@@ -3,6 +3,8 @@ import { FaStar } from 'react-icons/fa';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 import './reviewForm.css';
+import { apiFetch } from '../../../lib/api';
+
 
 function ReviewForm({ courseId, onSuccess }) {
   const [rating, setRating] = useState(5);
@@ -19,7 +21,7 @@ function ReviewForm({ courseId, onSuccess }) {
     setSubmitting(true);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/reviews/${courseId}`, {
+      const res = await apiFetch(`/api/reviews/${courseId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

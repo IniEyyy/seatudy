@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: seatudy
+    volumes:
+      - seatudy-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d seatudy"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  server:
+    build: ./server
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:8080
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: seatudy
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-before-deploying}
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_DAYS: 7
+    volumes:
+      - seatudy-uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./react-app
+      args:
+        VITE_API_URL: ""
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+
+volumes:
+  seatudy-db:
+  seatudy-uploads:

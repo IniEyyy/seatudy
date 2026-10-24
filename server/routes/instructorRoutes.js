@@ -49,5 +49,8 @@ router.get('/assignments/:assignmentId/submissions', instructorController.getAss
 //PUT update submission score
 router.put('/submissions/:submissionId/score', instructorController.giveScore);
 
+// PUT grade several submissions in one request
+router.put('/submissions/bulk-grade', instructorController.bulkGrade);
+
 
 module.exports = router;

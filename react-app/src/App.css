@@ -64,3 +64,16 @@ html {
 .topup-form button:hover {
   background-color: var(--brand-strong);
 }
+
+.error-boundary {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+}
+
+@media print {
+  .navbar,
+  .app-main > .loading-block {
+    display: none !important;
+  }
+}

@@ -11,6 +11,8 @@
   --brand: #2563eb;
   --brand-strong: #1d4ed8;
   --brand-deep: #0b1b3f;
+  --brand-soft: var(--brand-50);
+  --brand-ink: var(--brand-strong);
 
   --accent: #f59e0b;
   --accent-soft: #fef3c7;
@@ -61,6 +63,7 @@
   --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 14px 34px rgba(15, 23, 42, 0.09);
   --shadow-lg: 0 28px 60px rgba(15, 23, 42, 0.14);
+  --shadow-card: var(--shadow-sm);
 
   --ring: 0 0 0 3px rgba(37, 99, 235, 0.18);
   --nav-height: 72px;

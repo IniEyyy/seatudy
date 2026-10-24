@@ -1,10 +1,14 @@
 import { useRef, useState } from 'react';
 import { FaCloudUploadAlt, FaFileAlt, FaTimes } from 'react-icons/fa';
+import { apiFetch, downloadFile } from '../../lib/api';
 import './assignmentSubmitForm.css';
 
-function AssignmentSubmitForm({ token, courseId, assignmentId, onSuccess }) {
+
+function AssignmentSubmitForm({ courseId, assignmentId, existingSubmission, onSuccess }) {
   const fileInput = useRef(null);
-  const [submissionText, setSubmissionText] = useState('');
+  const [submissionText, setSubmissionText] = useState(
+    existingSubmission?.submission_content || ''
+  );
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   const [message, setMessage] = useState(null);
@@ -27,26 +31,42 @@ function AssignmentSubmitForm({ token, courseId, assignmentId, onSuccess }) {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDownload = async (file) => {
+    try {
+      await downloadFile(`/api/files/submissions/${file.id}`, file.file_name);
+    } catch (err) {
+      setMessage({ tone: 'error', text: err.message });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
     setMessage(null);
+
+    if (!submissionText.trim() && selectedFiles.length === 0) {
+      setMessage({ tone: 'error', text: 'Add an answer or attach a file before submitting.' });
+      return;
+    }
+
+    setSubmitting(true);
 
     const formData = new FormData();
     formData.append('content', submissionText);
     selectedFiles.forEach((file) => formData.append('files', file));
 
     try {
-      const res = await fetch(`http://localhost:5000/api/student/courses/${courseId}/assignments/${assignmentId}/submit`, {
+      const res = await apiFetch(`/api/student/courses/${courseId}/assignments/${assignmentId}/submit`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || 'Failed to submit');
 
-      setMessage({ tone: 'success', text: 'Submitted successfully.' });
+      setMessage({
+        tone: 'success',
+        text: data.resubmitted ? 'Resubmission saved.' : 'Submitted successfully.',
+      });
       setSubmissionText('');
       setSelectedFiles([]);
       if (fileInput.current) fileInput.current.value = '';
@@ -60,14 +80,45 @@ function AssignmentSubmitForm({ token, courseId, assignmentId, onSuccess }) {
 
   return (
     <form onSubmit={handleSubmit} className="asf">
+      {existingSubmission && (
+        <div className="asf-existing">
+          <div className="asf-existing-head">
+            <strong>Current submission</strong>
+            <span>
+              {existingSubmission.score != null
+                ? `Score: ${Number(existingSubmission.score).toFixed(1)}/100`
+                : 'Waiting for grading'}
+            </span>
+          </div>
+          {existingSubmission.feedback && (
+            <p className="asf-feedback">
+              <strong>Instructor feedback:</strong> {existingSubmission.feedback}
+            </p>
+          )}
+          {existingSubmission.files?.length > 0 && (
+            <ul className="asf-existing-files">
+              {existingSubmission.files.map((file) => (
+                <li key={file.id}>
+                  <button type="button" onClick={() => handleDownload(file)}>
+                    <FaFileAlt /> {file.file_name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="asf-note">
+            Submitting again replaces your answer and attached files, and clears the previous grade.
+          </p>
+        </div>
+      )}
+
       <label className="field">
-        <span>Your answer</span>
+        <span>{existingSubmission ? 'Update your answer' : 'Your answer'}</span>
         <textarea
           className="input"
           placeholder="Write your answer, add a link, or attach files below."
           value={submissionText}
           onChange={(e) => setSubmissionText(e.target.value)}
-          required
         />
       </label>
 
@@ -115,7 +166,11 @@ function AssignmentSubmitForm({ token, courseId, assignmentId, onSuccess }) {
 
       <div className="asf-actions">
         <button type="submit" className="btn" disabled={submitting}>
-          {submitting ? 'Submitting…' : 'Submit assignment'}
+          {submitting
+            ? 'Submitting...'
+            : existingSubmission
+              ? 'Resubmit assignment'
+              : 'Submit assignment'}
         </button>
         {message && (
           <span className={`asf-message is-${message.tone}`} role="status">

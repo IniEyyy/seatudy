@@ -1,58 +1,101 @@
-import { createContext, useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
+import { createContext, useCallback, useEffect, useState } from 'react';
+import { apiFetch, clearSession, refreshAccessToken, setStoredToken } from '../lib/api';
+
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
+    let active = true;
+
+    const bootstrap = async () => {
+      if (!localStorage.getItem('token')) {
+        const refreshed = await refreshAccessToken();
+        if (active && refreshed) setToken(refreshed);
       }
+      if (active) setReady(true);
+    };
 
-      try {
-        const res = await fetch('http://localhost:5000/api/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+    bootstrap();
+    return () => {
+      active = false;
+    };
+  }, []);
 
+  useEffect(() => {
+    if (!ready) return undefined;
+    let active = true;
+
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return undefined;
+    }
+
+    setLoading(true);
+    apiFetch('/api/profile')
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!active) return;
         if (res.ok) {
-          const data = await res.json();
           setUser(data);
+          const refreshedToken = localStorage.getItem('token');
+          if (refreshedToken && refreshedToken !== token) setToken(refreshedToken);
         } else {
-          localStorage.removeItem('token');
+          clearSession();
           setToken('');
           setUser(null);
         }
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [token, ready]);
+
+  useEffect(() => {
+    const handleExpired = () => {
+      setToken('');
+      setUser(null);
+      setLoading(false);
+    };
+    const handleRefreshed = (event) => {
+      const nextToken = event.detail?.token;
+      if (nextToken) setToken(nextToken);
     };
 
-    fetchUser();
-  }, [token]);
+    window.addEventListener('seatudy:session-expired', handleExpired);
+    window.addEventListener('seatudy:token-refreshed', handleRefreshed);
+    return () => {
+      window.removeEventListener('seatudy:session-expired', handleExpired);
+      window.removeEventListener('seatudy:token-refreshed', handleRefreshed);
+    };
+  }, []);
 
-  const login = (newToken) => {
-    localStorage.setItem('token', newToken);
+  const login = useCallback((newToken) => {
+    setStoredToken(newToken);
     setToken(newToken);
     setLoading(true);
-  };
+  }, []);
 
-  const logout = () => {
-    // const navigate = useNavigate();
-    localStorage.removeItem('token');
+  const logout = useCallback(async () => {
+    await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    clearSession();
+    setStoredToken('');
     localStorage.removeItem('role');
     setToken('');
     setUser(null);
-    // navigate('/login');
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ token, user, setUser, login, logout, loading }}>

@@ -15,12 +15,15 @@ exports.getMyAssignments = async (req, res) => {
         c.title AS course_title,
         s.id AS submission_id,
         s.score,
-        s.created_at AS submitted_at
+        s.feedback,
+        s.graded_at,
+        s.created_at AS submitted_at,
+        s.updated_at
       FROM assignments a
       JOIN courses c ON a.course_id = c.id
       JOIN enrollments e ON e.course_id = c.id AND e.student_id = $1
       LEFT JOIN LATERAL (
-        SELECT id, score, created_at
+        SELECT id, score, feedback, graded_at, created_at, updated_at
         FROM submissions
         WHERE assignment_id = a.id AND student_id = $1
         ORDER BY created_at DESC

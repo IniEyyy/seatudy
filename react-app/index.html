@@ -15,16 +15,32 @@
           var theme =
             stored === 'light' || stored === 'dark'
               ? stored
-              : window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light';
+              : stored === 'system'
+                ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                  ? 'dark'
+                  : 'light'
+                : window.matchMedia('(prefers-color-scheme: dark)').matches
+                  ? 'dark'
+                  : 'light';
           document.documentElement.setAttribute('data-theme', theme);
         } catch (error) {
           document.documentElement.setAttribute('data-theme', 'light');
         }
       })();
     </script>
-    <title>Seatudy Project</title>
+    <meta
+      name="description"
+      content="Seatudy is a focused learning platform for courses, assignments, feedback, and class discussions."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Seatudy" />
+    <meta
+      property="og:description"
+      content="Courses, assignments, feedback, and class discussions in one focused learning workspace."
+    />
+    <meta property="og:image" content="/icon-512.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Seatudy</title>
   </head>
   <body>
     <div id="root"></div>

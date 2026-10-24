@@ -366,6 +366,23 @@ exports.getAssignmentSubmissions = async (req, res) => {
       submissionsMap[sub.student_id] = sub;
     });
 
+    const submissionIds = submissionsRes.rows.map((sub) => sub.id);
+    const filesRes = submissionIds.length
+      ? await pool.query(
+          `SELECT id, submission_id, file_name, file_path
+           FROM submission_files
+           WHERE submission_id = ANY($1::int[])
+           ORDER BY id`,
+          [submissionIds]
+        )
+      : { rows: [] };
+
+    const filesMap = {};
+    for (const file of filesRes.rows) {
+      filesMap[file.submission_id] ||= [];
+      filesMap[file.submission_id].push(file);
+    }
+
     const result = students.map(student => {
       const sub = submissionsMap[student.student_id];
       let status = 'Not Submitted';
@@ -386,7 +403,11 @@ exports.getAssignmentSubmissions = async (req, res) => {
         is_late: isLate,
         content: sub?.content || '',
         score: sub?.score,
-        submission_id: sub?.id || null
+        feedback: sub?.feedback || '',
+        graded_at: sub?.graded_at || null,
+        updated_at: sub?.updated_at || null,
+        submission_id: sub?.id || null,
+        files: sub ? filesMap[sub.id] || [] : []
       };
     });
 
@@ -457,37 +478,94 @@ exports.getSubmissionsOverview = async (req, res) => {
   }
 };
 
+const parseScore = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 && numeric <= 100 ? numeric : null;
+};
+
 exports.giveScore = async (req, res) => {
   const { submissionId } = req.params;
-  const { score } = req.body;
+  const { score, feedback } = req.body;
   const instructorId = req.user.id;
 
-  const numericScore = Number(score);
-  if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > 100) {
+  const numericScore = parseScore(score);
+  if (numericScore === null) {
     return res.status(400).json({ message: 'Score must be between 0 and 100' });
   }
 
   try {
-    const ownership = await pool.query(`
-      SELECT s.id
-      FROM submissions s
-      JOIN assignments a ON s.assignment_id = a.id
+    const update = await pool.query(`
+      UPDATE submissions s
+      SET score = $1,
+          feedback = $2,
+          graded_at = CURRENT_TIMESTAMP,
+          graded_by = $3
+      FROM assignments a
       JOIN courses c ON a.course_id = c.id
-      WHERE s.id = $1 AND c.instructor_id = $2
-    `, [submissionId, instructorId]);
+      WHERE s.id = $4
+        AND s.assignment_id = a.id
+        AND c.instructor_id = $3
+      RETURNING s.*
+    `, [numericScore, String(feedback || '').trim() || null, instructorId, submissionId]);
 
-    if (ownership.rows.length === 0) {
+    if (update.rows.length === 0) {
       return res.status(404).json({ message: 'Submission not found or access denied' });
     }
 
-    const update = await pool.query(
-      'UPDATE submissions SET score = $1 WHERE id = $2 RETURNING *',
-      [numericScore, submissionId]
-    );
-
-    res.json({ message: 'Score updated', submission: update.rows[0] });
+    res.json({ message: 'Grade saved', submission: update.rows[0] });
   } catch (err) {
     console.error('Score update error:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.bulkGrade = async (req, res) => {
+  const { grades } = req.body;
+  const instructorId = req.user.id;
+
+  if (!Array.isArray(grades) || grades.length === 0 || grades.length > 200) {
+    return res.status(400).json({ message: 'Provide between 1 and 200 grades' });
+  }
+
+  const parsed = grades.map((grade) => ({
+    submissionId: Number(grade.submission_id),
+    score: parseScore(grade.score),
+    feedback: String(grade.feedback || '').trim() || null,
+  }));
+
+  if (parsed.some((grade) => !Number.isInteger(grade.submissionId) || grade.score === null)) {
+    return res.status(400).json({ message: 'Every grade needs a valid submission and score' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    let updated = 0;
+
+    for (const grade of parsed) {
+      const result = await client.query(`
+        UPDATE submissions s
+        SET score = $1,
+            feedback = $2,
+            graded_at = CURRENT_TIMESTAMP,
+            graded_by = $3
+        FROM assignments a
+        JOIN courses c ON a.course_id = c.id
+        WHERE s.id = $4
+          AND s.assignment_id = a.id
+          AND c.instructor_id = $3
+      `, [grade.score, grade.feedback, instructorId, grade.submissionId]);
+
+      updated += result.rowCount;
+    }
+
+    await client.query('COMMIT');
+    res.json({ message: `${updated} submission${updated === 1 ? '' : 's'} graded`, updated });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('Bulk grade error:', err);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    client.release();
   }
 };

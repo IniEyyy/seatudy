@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useToast } from '../../contexts/ToastContext.jsx';
+import { apiFetch } from '../../lib/api';
 import AuthShell from './AuthShell.jsx';
 import './AuthStyles.css';
 
@@ -37,7 +38,7 @@ function Register() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/register', {
+      const res = await apiFetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

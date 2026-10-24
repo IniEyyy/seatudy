@@ -303,3 +303,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+.sa-feedback {
+  display: block;
+  max-width: 220px;
+  margin-top: 0.25rem;
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}

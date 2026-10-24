@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowRight, FaClipboardList, FaClock, FaFileAlt, FaGraduationCap } from 'react-icons/fa';
 import './studentAssignments.css';
+import { apiFetch } from '../../lib/api';
 
-const API = 'http://localhost:5000';
+
 
 const statusTone = (status) => {
   if (status === 'On Time') return 'on-time';
@@ -40,7 +41,7 @@ function StudentAssignments() {
     setError('');
 
     try {
-      const res = await fetch(`${API}/api/student/assignments`, {
+      const res = await apiFetch(`/api/student/assignments`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
@@ -178,7 +179,10 @@ function StudentAssignments() {
                       {assignment.status}
                     </span>
                   </td>
-                  <td data-label="Score">{assignment.score ?? '—'}</td>
+                  <td data-label="Score">
+                    <span>{assignment.score ?? '—'}</span>
+                    {assignment.feedback && <span className="sa-feedback">{assignment.feedback}</span>}
+                  </td>
                   <td data-label="Action" className="sa-action-cell">
                     <Link
                       to={`/dashboard/student/courses/${assignment.course_id}`}

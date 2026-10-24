@@ -1,6 +1,8 @@
 ﻿import { useState } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import './addAssignmentForm.css';
+import { apiFetch } from '../../lib/api';
+
 
 function EditAssignmentForm({ assignment, onClose, onUpdate }) {
   const { showToast } = useToast();
@@ -15,7 +17,7 @@ function EditAssignmentForm({ assignment, onClose, onUpdate }) {
 
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/instructor/assignments/${assignment.id}`, {
+      const res = await apiFetch(`/api/instructor/assignments/${assignment.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

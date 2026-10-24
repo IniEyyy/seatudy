@@ -1,5 +1,6 @@
 -- Optional demo data for local development
--- Usage: psql -U postgres -d seatudy -f db/seed.sql
+-- Usage: npm run db:seed (dari folder server)
+-- File materi demo disalin otomatis dari db/demo-assets ke uploads/.
 -- Password semua akun utama:
 --   Admin@123 / Instructor@123 / Student@123
 -- Akun instructor tambahan memakai Instructor@123.
@@ -357,8 +358,8 @@ ON CONFLICT (course_id, user_id) DO NOTHING;
 -- 9. Forum
 -- ============================================================
 
-INSERT INTO forum (course_id, user_id, message, created_at)
-SELECT c.id, u.id, v.message, NOW() - (v.days_ago || ' days')::interval
+INSERT INTO forum (course_id, user_id, message, created_at, updated_at)
+SELECT c.id, u.id, v.message, NOW() - (v.days_ago || ' days')::interval, NOW() - (v.days_ago || ' days')::interval
 FROM (VALUES
   ('instructor@seatudy.local', 'Belajar React dari Nol', 'Selamat datang. Silakan tanya di sini kalau ada bagian yang belum jelas.', 12),
   ('alya@seatudy.local', 'Belajar React dari Nol', 'Untuk state yang dipakai banyak komponen, sebaiknya lift state atau pakai context?', 8),

@@ -13,6 +13,8 @@ import { AuthContext } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 import ThemeToggle from '../../Common/ThemeToggle';
 import './navbar.css';
+import { apiFetch, API_URL } from '../../../lib/api';
+
 
 const ROLE_LABEL = {
   student: 'Student',
@@ -44,7 +46,7 @@ function timeAgo(value) {
 }
 
 function Navbar() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, token, logout } = useContext(AuthContext);
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +56,6 @@ function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const notificationRef = useRef(null);
   const userMenuRef = useRef(null);
-  const token = localStorage.getItem('token');
 
   const unreadCount = notifications.filter((item) => !item.is_read).length;
 
@@ -65,21 +66,23 @@ function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!user) return undefined;
+    if (!user || !token) return undefined;
 
-    const socket = io('http://localhost:5000', { transports: ['websocket', 'polling'] });
-    socket.emit('register', user.id);
+    const socket = io(API_URL || window.location.origin, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
     socket.on('new-notification', (notif) => {
       setNotifications((prev) => [notif, ...prev]);
     });
 
     return () => socket.disconnect();
-  }, [user]);
+  }, [user, token]);
 
   useEffect(() => {
     if (!user || !token) return;
 
-    fetch('http://localhost:5000/api/notifications', {
+    apiFetch('/api/notifications', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : []))
@@ -110,7 +113,7 @@ function Navbar() {
 
   const handleMarkAllRead = async () => {
     try {
-      await fetch('http://localhost:5000/api/notifications/mark-all-read', {
+      await apiFetch('/api/notifications/mark-all-read', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

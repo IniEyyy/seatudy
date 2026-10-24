@@ -1,4 +1,4 @@
-﻿import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FaArrowRight,
@@ -8,12 +8,15 @@ import {
   FaCoins,
   FaGraduationCap,
   FaLayerGroup,
+  FaPlay,
   FaStar,
   FaUsers,
   FaWallet,
 } from 'react-icons/fa';
 import { AuthContext } from '../../contexts/AuthContext';
 import './dashboard.css';
+import { apiFetch } from '../../lib/api';
+
 
 const ROLE_COPY = {
   student: {
@@ -84,7 +87,7 @@ function Dashboard() {
     setStatsLoading(true);
     setError('');
 
-    fetch('http://localhost:5000/api/dashboard/stats', {
+    apiFetch('/api/dashboard/stats', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -135,7 +138,7 @@ function Dashboard() {
       { label: 'Average rating', value: stats.averageRating, format: 'rating', icon: FaStar, tone: 'mint', hint: 'From learner reviews' },
     ],
     admin: [
-      { label: 'Total users', value: stats.users, icon: FaUsers, tone: 'blue', hint: `${stats.students || 0} students Â· ${stats.instructors || 0} instructors` },
+      { label: 'Total users', value: stats.users, icon: FaUsers, tone: 'blue', hint: `${stats.students || 0} students / ${stats.instructors || 0} instructors` },
       { label: 'Courses', value: stats.courses, icon: FaLayerGroup, tone: 'violet', hint: 'In the catalogue' },
       { label: 'Enrollments', value: stats.enrollments, icon: FaGraduationCap, tone: 'mint', hint: 'Student-course connections' },
       { label: 'Course revenue', value: stats.revenue, format: 'currency', icon: FaCoins, tone: 'amber', hint: 'From completed purchases' },
@@ -157,6 +160,15 @@ function Dashboard() {
       { label: 'Course catalogue', description: 'Read-only view of every course on the platform.', to: '/dashboard/courses', icon: FaLayerGroup },
     ],
   }[role] || [];
+
+  if (role === 'student' && data?.continueCourse) {
+    quickActions.unshift({
+      label: 'Continue learning',
+      description: data.continueCourse.title,
+      to: data.continueCourse.href,
+      icon: FaPlay,
+    });
+  }
 
   return (
     <div className="page dashboard-page">

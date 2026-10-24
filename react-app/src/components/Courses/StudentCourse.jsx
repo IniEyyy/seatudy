@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   FaArrowLeft,
@@ -13,7 +13,10 @@ import ReviewList from './Review/ReviewList.jsx';
 import ReviewForm from './Review/ReviewForm.jsx';
 import ForumDiscussion from './Discussion/ForumDiscussion.jsx';
 import AssignmentSubmitForm from '../Assignment/AssignmentSubmitForm.jsx';
+import MaterialViewer from './MaterialViewer.jsx';
 import { useToast } from '../../contexts/ToastContext';
+import { apiFetch } from '../../lib/api';
+
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -36,14 +39,20 @@ function StudentCourse() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshReview, setRefreshReview] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const isStudent = user?.role === 'student';
+  const isAdmin = user?.role === 'admin';
+  const canBrowseContent = isStudent || isAdmin;
+  const visibleTabs = isStudent
+    ? TABS
+    : TABS.filter((tab) => ['overview', 'review', 'forum'].includes(tab.id));
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
         if (token) {
-          const profileRes = await fetch('http://localhost:5000/api/profile', {
+          const profileRes = await apiFetch('/api/profile', {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -52,7 +61,7 @@ function StudentCourse() {
             setUser(userData);
 
             if (userData.role === 'student') {
-              const studentRes = await fetch(`http://localhost:5000/api/student/courses/${id}`, {
+              const studentRes = await apiFetch(`/api/student/courses/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 
@@ -66,12 +75,12 @@ function StudentCourse() {
           }
         }
 
-        const publicRes = await fetch(`http://localhost:5000/api/public/courses/${id}`);
+        const publicRes = await apiFetch(`/api/public/courses/${id}`);
         if (!publicRes.ok) throw new Error('Course not found');
         setCourse(await publicRes.json());
 
         if (token) {
-          const purchaseRes = await fetch(`http://localhost:5000/api/student/purchases/${id}`, {
+          const purchaseRes = await apiFetch(`/api/student/purchases/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (purchaseRes.ok) {
@@ -85,11 +94,11 @@ function StudentCourse() {
     };
 
     fetchCourseDetail();
-  }, [id, token]);
+  }, [id, token, refreshKey]);
 
   const handleBuy = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/student/buy/${id}`, {
+      const res = await apiFetch(`/api/student/buy/${id}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -104,14 +113,14 @@ function StudentCourse() {
 
   const handleEnroll = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/student/enroll/${id}`, {
+      const res = await apiFetch(`/api/student/enroll/${id}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to enroll in course');
 
-      const enrolledRes = await fetch(`http://localhost:5000/api/student/courses/${id}`, {
+      const enrolledRes = await apiFetch(`/api/student/courses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (enrolledRes.ok) {
@@ -143,7 +152,7 @@ function StudentCourse() {
       <div className="page student-course-page">
         <div className="loading-block">
           <span className="spinner" />
-          <span>Loading course…</span>
+          <span>Loading course...</span>
         </div>
       </div>
     );
@@ -152,7 +161,7 @@ function StudentCourse() {
   const price = Number(course.price) || 0;
   const rating = Number(course.rating_avg) || 0;
   const courseLink = isStudent ? '/dashboard/student/courses' : '/dashboard/courses';
-  const locked = !(hasPurchased && hasEnrolled);
+  const locked = isStudent && !(hasPurchased && hasEnrolled);
 
   const renderTabContent = () => {
     if (activeTab === 'overview') {
@@ -174,6 +183,29 @@ function StudentCourse() {
               <strong>{course.level || 'All levels'}</strong>
             </div>
           </div>
+
+          {course.progress && (
+            <div className="sc-progress">
+              <div className="sc-progress-head">
+                <strong>Course progress</strong>
+                <span>{course.progress.percent}%</span>
+              </div>
+              <div className="sc-progress-bar" role="progressbar" aria-valuenow={course.progress.percent} aria-valuemin={0} aria-valuemax={100}>
+                <span style={{ width: `${course.progress.percent}%` }} />
+              </div>
+              <p>
+                {course.progress.submittedAssignments} of {course.progress.totalAssignments} assignments submitted
+                {course.progress.averageScore != null
+                  ? ` - average score ${course.progress.averageScore}/100`
+                  : ''}
+              </p>
+              {course.progress.certificateEligible && (
+                <Link to={`/dashboard/student/courses/${course.id}/certificate`} className="btn btn-sm">
+                  View certificate
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -189,44 +221,9 @@ function StudentCourse() {
             </div>
           ) : (
             <div className="sc-materials">
-              {course.materials.map((material, index) => {
-                const fileUrl = `http://localhost:5000${material.link}`;
-                const ext = material.link?.split('.').pop().toLowerCase();
-                const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
-                const isVideo = ['mp4', 'mov', 'avi'].includes(ext);
-                const isPDF = ext === 'pdf';
-                const isDoc = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext);
-
-                return (
-                  <article key={index} className="sc-material">
-                    <div className="sc-material-head">
-                      <div>
-                        <strong>{material.title}</strong>
-                        {material.content && <p>{material.content}</p>}
-                      </div>
-                      <a href={fileUrl} download className="btn btn-sm btn-secondary">
-                        Download
-                      </a>
-                    </div>
-
-                    {isVideo && <video controls src={fileUrl} />}
-                    {isPDF && <iframe src={fileUrl} title={material.title} frameBorder="0" />}
-                    {isImage && <img src={fileUrl} alt={material.title} />}
-                    {isDoc && (
-                      <iframe
-                        src={`https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`}
-                        title={material.title}
-                        frameBorder="0"
-                      />
-                    )}
-                    {!isVideo && !isPDF && !isImage && !isDoc && (
-                      <a href={fileUrl} target="_blank" rel="noreferrer" className="sc-file-link">
-                        Open file
-                      </a>
-                    )}
-                  </article>
-                );
-              })}
+              {course.materials.map((material) => (
+                <MaterialViewer key={material.id} material={material} />
+              ))}
             </div>
           )}
         </div>
@@ -261,10 +258,13 @@ function StudentCourse() {
                     </span>
                   </div>
                   <AssignmentSubmitForm
-                    token={token}
                     courseId={id}
                     assignmentId={assignment.id}
-                    onSuccess={() => showToast('Assignment submitted.', 'success')}
+                    existingSubmission={assignment.submission_id ? assignment : null}
+                    onSuccess={() => {
+                      showToast('Assignment saved.', 'success');
+                      setRefreshKey((value) => value + 1);
+                    }}
                   />
                 </article>
               ))}
@@ -278,11 +278,17 @@ function StudentCourse() {
       return (
         <div className="sc-panel sc-two-col">
           <div>
-            <h2>Write a review</h2>
-            <ReviewForm
-              courseId={course.id}
-              onSuccess={() => setRefreshReview((value) => !value)}
-            />
+            <h2>{isStudent ? 'Write a review' : 'Reviews'}</h2>
+            {isStudent ? (
+              <ReviewForm
+                courseId={course.id}
+                onSuccess={() => setRefreshReview((value) => !value)}
+              />
+            ) : (
+              <p className="sc-syllabus">
+                Only enrolled students can submit reviews. You can still read what learners said.
+              </p>
+            )}
           </div>
           <div>
             <h2>Learner reviews</h2>
@@ -379,7 +385,17 @@ function StudentCourse() {
         </aside>
       </section>
 
-      {locked ? (
+      {!canBrowseContent ? (
+        <div className="sc-locked">
+          <FaLock />
+          <div>
+            <strong>Catalogue preview</strong>
+            <span>
+              Materials, assignments, reviews, and the forum are available to enrolled students.
+            </span>
+          </div>
+        </div>
+      ) : locked ? (
         <div className="sc-locked">
           <FaLock />
           <div>
@@ -396,7 +412,7 @@ function StudentCourse() {
       ) : (
         <section className="sc-content">
           <div className="sc-tabs" role="tablist" aria-label="Course sections">
-            {TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
