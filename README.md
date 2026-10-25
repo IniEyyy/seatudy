@@ -180,7 +180,7 @@ Total data demo: 18 akun, 9 course, 18 materi, 18 assignment, 26 enrollment, 25 
 - [x] Dashboard berbeda per role dengan statistik dan aktivitas terbaru
 - [x] Pencarian, filter, dan sorting pada katalog course
 - [x] Toast notification konsisten (pengganti `alert`)
-- [x] Tema System / Light / Dark (toggle di navbar & halaman auth, tersimpan di localStorage)
+- [x] Default tema mengikuti sistem; tombol di navbar & halaman auth men-toggle Light/Dark (pilihan tersimpan di localStorage)
 - [x] Health check database di `GET /api/health`
 - [x] Proteksi dasar: Helmet, rate limit login/register, access token 15 menit + refresh token httpOnly yang dirotasi
 - [x] File materi & submission diakses lewat endpoint terproteksi (cek enrollment/ownership), bukan URL publik

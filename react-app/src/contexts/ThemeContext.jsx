@@ -47,19 +47,12 @@ export function ThemeProvider({ children }) {
     }
   }, [mode, theme]);
 
-  const cycleTheme = () => {
-    setMode((current) => {
-      const index = MODES.indexOf(current);
-      return MODES[(index + 1) % MODES.length];
-    });
-  };
-
   const toggleTheme = () => {
     setMode(theme === 'light' ? 'dark' : 'light');
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, mode, setMode, cycleTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
