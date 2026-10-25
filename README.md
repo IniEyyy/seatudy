@@ -15,12 +15,14 @@ Seatudy adalah platform kursus online dengan tiga peran: **student**, **instruct
 ```
 seatudy/
 ├── react-app/            # Frontend (React + Vite)
-│   └── src/
-│       ├── components/   # Auth, Courses, Dashboard, Assignment, Review, Forum
-│       ├── contexts/     # Auth, Theme, Toast, Confirm
-│       ├── lib/          # API client
-│       ├── styles/       # theme.css (design token + komponen dasar)
-│       └── App.jsx       # Routing
+│   ├── e2e/              # Playwright end-to-end tests
+│   ├── src/
+│   │   ├── components/   # Auth, Courses, Dashboard, Assignment, Review, Forum
+│   │   ├── contexts/     # Auth, Theme, Toast, Confirm
+│   │   ├── lib/          # API client
+│   │   ├── styles/       # theme.css (design token + komponen dasar)
+│   │   └── App.jsx       # Routing
+│   └── playwright.config.js
 └── server/               # Backend (Express + PostgreSQL)
     ├── controllers/      # Route handlers
     ├── middlewares/      # Auth + upload (multer)
@@ -191,7 +193,8 @@ Total data demo: 18 akun, 9 course, 18 materi, 18 assignment, 26 enrollment, 25 
 - [x] Forum dengan reply, edit, hapus, dan pagination
 - [x] Admin pagination/search/sort + audit log perubahan role
 - [x] Dialog konfirmasi aksesibel (focus trap, Escape, aria-modal) + toast live region
-- [x] Integration tests (`npm test` di `server`) dan GitHub Actions CI
+- [x] Integration tests (`npm test` di `server`) dan E2E Playwright (`npm run test:e2e` di `react-app`)
+- [x] GitHub Actions CI: migrasi, seed, integration tests, lint, build, dan E2E
 - [x] Docker Compose untuk database, API, dan frontend nginx
 
 ---
@@ -213,7 +216,21 @@ npm run lint
 npm run build
 ```
 
-CI menjalankan migrasi, seed, integration tests, lint, dan build lewat `.github/workflows/ci.yml`.
+### End-to-end (Playwright)
+
+E2E memakai database yang sudah dimigrasi dan di-seed, karena test masuk dengan akun demo. API (`http://localhost:5000`) dan Vite dev server (`http://localhost:5173`) otomatis dipakai ulang jika sudah berjalan; kalau belum, Playwright menjalankannya sendiri.
+
+```bash
+cd react-app
+npx playwright install chromium   # sekali saja
+npm run test:e2e                  # jalankan semua test
+npm run test:e2e:ui               # mode interaktif
+npm run test:e2e:report           # buka HTML report terakhir
+```
+
+Cakupan: login valid/invalid dan redirect, dashboard serta course student, grading + chart instructor, pencarian user admin, proteksi role, tema System/Light/Dark, dan layout mobile tanpa horizontal overflow. Screenshot, video, dan trace kegagalan tersimpan di `test-results/`, sedangkan report HTML ada di `playwright-report/`. Keduanya diabaikan git.
+
+CI menjalankan migrasi, seed, integration tests, lint, build, lalu E2E lewat `.github/workflows/ci.yml`. Report Playwright diunggah sebagai artifact jika job gagal.
 
 ---
 
