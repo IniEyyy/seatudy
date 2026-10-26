@@ -10,7 +10,9 @@ Seatudy adalah platform kursus online dengan tiga peran: **student**, **instruct
 
 ## Preview
 
-![Pratinjau Seatudy: dashboard student, detail course, submission instructor, dan course manager admin](docs/preview.gif)
+Tampilan dark mode dari alur utama Seatudy.
+
+![Pratinjau dark mode Seatudy: dashboard student, detail course, submission instructor, dan course manager admin](docs/preview.gif)
 
 [▶ Tonton preview kualitas penuh (MP4, 22 detik)](docs/preview.mp4)
 
