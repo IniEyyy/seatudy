@@ -1,0 +1,136 @@
+.manager-header-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.manager-header-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.manager-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.manager-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.manager-summary strong {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.manager-summary span {
+  color: var(--ink-faint);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.manager-table {
+  min-width: 920px;
+}
+
+.manager-course strong,
+.manager-instructor strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.manager-course small,
+.manager-instructor small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+}
+
+.manager-level {
+  display: inline-flex;
+  padding: 0.26rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.manager-price,
+.manager-rating {
+  font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.manager-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.manager-delete {
+  color: var(--danger-ink);
+}
+
+.manager-delete:hover {
+  color: var(--danger-ink-strong);
+}
+
+.manager-reset {
+  min-height: 34px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.manager-reset:hover {
+  border-color: var(--brand);
+  color: var(--brand-strong);
+}
+
+.cf-note {
+  margin: 0;
+  color: var(--warning-ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .manager-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .manager-summary {
+    grid-template-columns: 1fr;
+  }
+}

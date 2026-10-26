@@ -36,9 +36,9 @@ const ROLE_COPY = {
   admin: {
     label: 'Admin workspace',
     headline: 'The platform at a glance.',
-    description: 'Monitor accounts, the course catalogue, and enrolment activity across Seatudy.',
+    description: 'Monitor accounts and manage every course on Seatudy from one place.',
     primary: { label: 'Manage users', to: '/dashboard/admin' },
-    secondary: { label: 'Browse catalogue', to: '/dashboard/courses' },
+    secondary: { label: 'Manage courses', to: '/dashboard/admin/courses' },
   },
 };
 
@@ -157,7 +157,7 @@ function Dashboard() {
     ],
     admin: [
       { label: 'Manage users', description: 'Promote instructors or demote accounts.', to: '/dashboard/admin', icon: FaUsers },
-      { label: 'Course catalogue', description: 'Read-only view of every course on the platform.', to: '/dashboard/courses', icon: FaLayerGroup },
+      { label: 'Course manager', description: 'Create, edit, reassign, or remove course listings.', to: '/dashboard/admin/courses', icon: FaLayerGroup },
     ],
   }[role] || [];
 

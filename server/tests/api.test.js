@@ -289,6 +289,85 @@ test('instructor and admin can moderate a course forum', async () => {
   assert.equal((await adminForum.json()).moderator, true);
 });
 
+test('admin course manager lists, creates, updates, and deletes courses', async () => {
+  const admin = await login('admin@seatudy.local', 'Admin@123');
+  const headers = { Authorization: `Bearer ${admin.token}`, 'Content-Type': 'application/json' };
+
+  const instructorsRes = await request('/api/admin/courses/instructors', { headers });
+  const instructors = await instructorsRes.json();
+  assert.equal(instructorsRes.status, 200);
+  assert.ok(instructors.length > 0, 'seed should provide instructors');
+  const instructor = instructors[0];
+
+  const listRes = await request('/api/admin/courses?limit=5&sort=title&order=asc', { headers });
+  const list = await listRes.json();
+  assert.equal(listRes.status, 200);
+  assert.ok(Array.isArray(list.courses));
+  assert.ok(list.courses.length > 0);
+  assert.ok(list.courses.length <= 5);
+  assert.ok(list.pagination.total >= list.courses.length);
+  assert.ok('material_count' in list.courses[0]);
+  assert.ok('instructor_name' in list.courses[0]);
+  assert.ok(list.summary.courses >= list.courses.length);
+
+  const student = await login('student@seatudy.local', 'Student@123');
+  const denied = await request('/api/admin/courses', {
+    headers: { Authorization: `Bearer ${student.token}` },
+  });
+  assert.equal(denied.status, 403);
+
+  const payload = {
+    instructor_id: instructor.id,
+    title: 'Automated course manager test',
+    description: 'Created by the API test suite.',
+    category: 'Testing',
+    level: 'Beginner',
+    price: 19.5,
+    syllabus: 'Week 1: automated coverage',
+  };
+
+  let courseId = null;
+  try {
+    const createRes = await request('/api/admin/courses', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+    const created = await createRes.json();
+    assert.equal(createRes.status, 201, created.message);
+    courseId = created.course.id;
+    assert.ok(courseId);
+
+    const filtered = await (
+      await request('/api/admin/courses?search=Automated%20course%20manager%20test', { headers })
+    ).json();
+    assert.ok(filtered.courses.some((course) => course.id === courseId));
+
+    const updateRes = await request(`/api/admin/courses/${courseId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ ...payload, title: 'Automated course manager test (edited)', price: 30 }),
+    });
+    const updated = await updateRes.json();
+    assert.equal(updateRes.status, 200, updated.message);
+    assert.equal(updated.course.title, 'Automated course manager test (edited)');
+    assert.equal(Number(updated.course.price), 30);
+  } finally {
+    if (courseId) {
+      const removeRes = await request(`/api/admin/courses/${courseId}`, {
+        method: 'DELETE',
+        headers,
+      });
+      assert.equal(removeRes.status, 200);
+    }
+  }
+
+  const afterDelete = await (
+    await request('/api/admin/courses?search=Automated%20course%20manager%20test', { headers })
+  ).json();
+  assert.equal(afterDelete.courses.length, 0);
+});
+
 test('admin user list is paginated and audit log is available', async () => {
   const { token } = await login('admin@seatudy.local', 'Admin@123');
   const usersRes = await request('/api/users?page=1&limit=5&exclude=admin', {

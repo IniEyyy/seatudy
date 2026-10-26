@@ -12,6 +12,7 @@ const Login = lazy(() => import('./components/Auth/Login.jsx'));
 const Logout = lazy(() => import('./components/Auth/Logout.jsx'));
 const Dashboard = lazy(() => import('./components/Dashboard/Dashboard.jsx'));
 const AdminDashboard = lazy(() => import('./components/Dashboard/AdminDashboard.jsx'));
+const AdminCourseManager = lazy(() => import('./components/Dashboard/AdminCourseManager.jsx'));
 const TopUp = lazy(() => import('./components/Dashboard/TopUpBalance.jsx'));
 const InstructorCourses = lazy(() => import('./components/Courses/InstructorCourses.jsx'));
 const InstructorCourse = lazy(() => import('./components/Courses/InstructorCourse.jsx'));
@@ -34,6 +35,7 @@ const TITLES = {
   '/dashboard/student/courses': 'My courses',
   '/dashboard/student/assignments': 'My assignments',
   '/dashboard/admin': 'Manage accounts',
+  '/dashboard/admin/courses': 'Course manager',
   '/dashboard/instructor/courses': 'My courses',
   '/dashboard/instructor/submissions': 'Submissions',
   '/student/topup': 'Top up wallet',
@@ -49,7 +51,7 @@ function PageFallback() {
 }
 
 function AppLayout() {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const location = useLocation();
   const isAuthPage = AUTH_PATHS.includes(location.pathname);
 
@@ -82,7 +84,11 @@ function AppLayout() {
                 path="/dashboard/courses"
                 element={
                   <ProtectedRoute>
-                    <StudentCourses />
+                    {user?.role === 'admin' ? (
+                      <Navigate to="/dashboard/admin/courses" replace />
+                    ) : (
+                      <StudentCourses />
+                    )}
                   </ProtectedRoute>
                 }
               />
@@ -100,6 +106,14 @@ function AppLayout() {
                 element={
                   <ProtectedRoute roles={['admin']}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/admin/courses"
+                element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AdminCourseManager />
                   </ProtectedRoute>
                 }
               />

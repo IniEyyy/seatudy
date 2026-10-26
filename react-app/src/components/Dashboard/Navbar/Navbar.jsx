@@ -174,8 +174,8 @@ function Navbar() {
 
               {user.role === 'admin' && (
                 <>
-                  <NavLink to="/dashboard/courses" className={navLinkClass}>
-                    Course catalogue
+                  <NavLink to="/dashboard/admin/courses" className={navLinkClass}>
+                    Course manager
                   </NavLink>
                   <NavLink to="/dashboard/admin" className={navLinkClass}>
                     Users

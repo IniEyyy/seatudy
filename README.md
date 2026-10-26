@@ -8,12 +8,19 @@ Seatudy adalah platform kursus online dengan tiga peran: **student**, **instruct
 - **Auth:** short-lived JWT + rotating httpOnly refresh cookie
 - **Real-time:** Socket.IO
 
+## Preview
+
+![Pratinjau Seatudy: dashboard student, detail course, submission instructor, dan course manager admin](docs/preview.gif)
+
+[▶ Tonton preview kualitas penuh (MP4, 22 detik)](docs/preview.mp4)
+
 ---
 
 ## Struktur Project
 
 ```
 seatudy/
+├── docs/                 # Preview GIF/MP4 untuk README
 ├── react-app/            # Frontend (React + Vite)
 │   ├── e2e/              # Playwright end-to-end tests
 │   ├── src/
@@ -178,7 +185,7 @@ Total data demo: 18 akun, 9 course, 18 materi, 18 assignment, 26 enrollment, 25 
 - [x] Review & rating course
 - [x] Forum diskusi per course
 - [x] Notifikasi real-time (Socket.IO)
-- [x] Admin dashboard (kelola user + lihat daftar course)
+- [x] Admin dashboard (kelola user + course manager: create/edit/reassign/delete course)
 - [x] Dashboard berbeda per role dengan statistik dan aktivitas terbaru
 - [x] Pencarian, filter, dan sorting pada katalog course
 - [x] Toast notification konsisten (pengganti `alert`)
@@ -191,7 +198,7 @@ Total data demo: 18 akun, 9 course, 18 materi, 18 assignment, 26 enrollment, 25 
 - [x] Resubmission assignment, feedback instructor, dan bulk grading
 - [x] Progress course, continue-learning, dan halaman sertifikat (semua assignment submitted + graded, rata-rata >= 60)
 - [x] Forum dengan reply, edit, hapus, dan pagination
-- [x] Admin pagination/search/sort + audit log perubahan role
+- [x] Admin pagination/search/sort + audit log perubahan role dan course
 - [x] Dialog konfirmasi aksesibel (focus trap, Escape, aria-modal) + toast live region
 - [x] Integration tests (`npm test` di `server`) dan E2E Playwright (`npm run test:e2e` di `react-app`)
 - [x] GitHub Actions CI: migrasi, seed, integration tests, lint, build, dan E2E
@@ -228,21 +235,38 @@ npm run test:e2e:ui               # mode interaktif
 npm run test:e2e:report           # buka HTML report terakhir
 ```
 
-Cakupan: login valid/invalid dan redirect, dashboard serta course student, grading + chart instructor, pencarian user admin, proteksi role, tema System/Light/Dark, dan layout mobile tanpa horizontal overflow. Screenshot, video, dan trace kegagalan tersimpan di `test-results/`, sedangkan report HTML ada di `playwright-report/`. Keduanya diabaikan git.
+Cakupan: login valid/invalid dan redirect, dashboard serta course student, grading + chart instructor, pencarian user admin, course manager admin (filter + create/edit/delete), proteksi role, tema System/Light/Dark, dan layout mobile tanpa horizontal overflow. Screenshot, video, dan trace kegagalan tersimpan di `test-results/`, sedangkan report HTML ada di `playwright-report/`. Keduanya diabaikan git.
 
 CI menjalankan migrasi, seed, integration tests, lint, build, lalu E2E lewat `.github/workflows/ci.yml`. Report Playwright diunggah sebagai artifact jika job gagal.
 
 ---
 
-## Docker
+## Docker Compose (lokal)
 
-```bash
-# opsional: set secret sendiri
-set JWT_SECRET=string-random-panjang
-docker compose up --build
+Prasyarat: Docker Desktop dengan backend WSL2. Setelah WSL dan Virtual Machine Platform diaktifkan, restart Windows sekali agar Docker daemon bisa berjalan.
+
+```bat
+copy .env.docker.example .env
+:: edit JWT_SECRET, dan ubah WEB_PORT jika 8080 sudah dipakai proses lain
+docker compose up --build -d
+docker compose exec server npm run db:seed
 ```
 
-Frontend tersedia di `http://localhost:8080`. Nginx meneruskan `/api` dan `/socket.io` ke container API; database dan upload memakai volume agar data tetap ada. Migrasi dijalankan otomatis saat container API start. Seed tidak dijalankan otomatis.
+Buka `http://localhost:8080` (atau sesuai `WEB_PORT` di `.env`). Seed di atas opsional dan mengisi akun demo. Nginx meneruskan `/api` dan `/socket.io` ke container API; database dan upload memakai volume agar data tetap ada. Migrasi dijalankan otomatis saat container API start.
+
+```bash
+docker compose ps
+docker compose logs -f server
+docker compose down
+docker compose down -v   # hapus volume database dan upload
+```
+
+Catatan:
+
+- `JWT_SECRET` wajib diisi; Compose menolak start tanpa nilai tersebut.
+- `COOKIE_SECURE=false` untuk akses HTTP lokal. Set `true` jika aplikasi disajikan lewat HTTPS.
+- Port PostgreSQL tidak dibuka ke host. Gunakan `docker compose exec db psql -U postgres -d seatudy`.
+- File `.env` berisi secret dan tidak di-commit.
 
 ---
 
@@ -273,7 +297,7 @@ npm run db:seed
 
 **Login berhasil tetapi halaman kosong/403**
 
-Pastikan role akun sesuai halaman yang dibuka. Student hanya bisa membuka halaman student, instructor halaman instructor, sedangkan admin dapat membuka dashboard admin dan daftar course.
+Pastikan role akun sesuai halaman yang dibuka. Student hanya bisa membuka halaman student, instructor halaman instructor, sedangkan admin dapat membuka dashboard admin, course manager, dan halaman user.
 
 ---
 

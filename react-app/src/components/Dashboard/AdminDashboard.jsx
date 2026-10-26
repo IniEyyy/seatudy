@@ -13,6 +13,48 @@ const ROLE_LABEL = {
 
 const PAGE_SIZE = 10;
 
+function auditDescription(log) {
+  const meta = log.metadata || {};
+
+  if (log.action === 'user.role_changed') {
+    return (
+      <>
+        changed <b>{meta.username || `user #${log.entity_id}`}</b> from {meta.from || 'unknown'} to{' '}
+        {meta.to || 'unknown'}
+      </>
+    );
+  }
+  if (log.action === 'course.created') {
+    return (
+      <>
+        created course <b>{meta.title || `#${log.entity_id}`}</b>
+        {meta.instructor ? ` for ${meta.instructor}` : ''}
+      </>
+    );
+  }
+  if (log.action === 'course.updated') {
+    return (
+      <>
+        updated course <b>{meta.title || `#${log.entity_id}`}</b>
+        {meta.previousTitle && meta.previousTitle !== meta.title ? ` (was ${meta.previousTitle})` : ''}
+      </>
+    );
+  }
+  if (log.action === 'course.deleted') {
+    return (
+      <>
+        deleted course <b>{meta.title || `#${log.entity_id}`}</b>
+      </>
+    );
+  }
+
+  return (
+    <>
+      updated <b>{log.entity_type} #{log.entity_id}</b>
+    </>
+  );
+}
+
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
@@ -280,16 +322,13 @@ function AdminDashboard() {
           </div>
         </div>
         {auditLogs.length === 0 ? (
-          <p className="admin-muted">Role changes will appear here.</p>
+          <p className="admin-muted">Role and course changes will appear here.</p>
         ) : (
           <ul className="admin-audit-list">
             {auditLogs.map((log) => (
               <li key={log.id}>
                 <strong>{log.actor_name || 'Admin'}</strong>
-                <span>
-                  changed <b>{log.metadata?.username || `user #${log.entity_id}`}</b> from{' '}
-                  {log.metadata?.from || 'unknown'} to {log.metadata?.to || 'unknown'}
-                </span>
+                <span>{auditDescription(log)}</span>
                 <time>{new Date(log.created_at).toLocaleString()}</time>
               </li>
             ))}
