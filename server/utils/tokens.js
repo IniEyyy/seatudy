@@ -13,9 +13,15 @@ const signAccessToken = (user) =>
     expiresIn: ACCESS_TTL,
   });
 
+const isSecureCookie = () => {
+  if (process.env.COOKIE_SECURE === 'true') return true;
+  if (process.env.COOKIE_SECURE === 'false') return false;
+  return process.env.NODE_ENV === 'production';
+};
+
 const cookieOptions = (expiresAt) => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: isSecureCookie(),
   sameSite: 'lax',
   path: '/api/auth',
   expires: expiresAt,
